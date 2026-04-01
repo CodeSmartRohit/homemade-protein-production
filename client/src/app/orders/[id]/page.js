@@ -148,7 +148,23 @@ export default function OrderDetailPage({ params }) {
   if (!order) return null;
 
   return (
-    <div className="container mx-auto px-6 md:px-12 py-12 min-h-screen">
+    <div className="container mx-auto px-6 md:px-12 py-12 min-h-screen animate-fade-in">
+      {(order.status === 'confirmed' || order.status === 'pending') && (new Date() - new Date(order.createdAt) < 5 * 60 * 1000) && (
+        <div className="bg-emerald-900/30 border border-emerald-500/50 rounded-2xl p-6 mb-8 flex items-center gap-6 text-emerald-400 font-playfair shadow-[0_0_40px_rgba(16,185,129,0.1)] transition-all">
+          <div className="bg-emerald-500/20 p-3 rounded-full border border-emerald-500/30">
+            <FiCheckCircle className="w-8 h-8 flex-shrink-0 animate-pulse text-emerald-300" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold tracking-wide">Congratulations!</h2>
+            <p className="font-sans text-emerald-100/80 text-sm mt-1 max-w-xl">
+              {order.paymentMethod === 'cod' 
+                ? 'Your Cash on Delivery order is fully confirmed. Hand your cash directly to the delivery runner when your protein arrives!' 
+                : 'Your payment was strictly verified and your order has been successfully confirmed. Our chef is preparing your protein now!'}
+            </p>
+          </div>
+        </div>
+      )}
+
       <Link href="/orders" className="inline-flex items-center text-amber-100/70 hover:text-amber-400 transition-colors mb-8 group">
         <FiArrowLeft className="mr-2 group-hover:-translate-x-1 transition-transform" /> Back to My Orders
       </Link>
