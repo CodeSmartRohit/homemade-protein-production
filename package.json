@@ -3,6 +3,8 @@
   "version": "1.0.0",
   "description": "Root orchestrator for HOMEMADE Protein",
   "scripts": {
+    "start": "node server/server.js",
+    "build": "npm install --prefix server",
     "dev": "concurrently \"npm run dev --prefix client\" \"npm run dev --prefix server\"",
     "install:all": "npm install && npm install --prefix client && npm install --prefix server"
   },
