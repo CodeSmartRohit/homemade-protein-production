@@ -1,18 +1,20 @@
 /** @type {import('next').NextConfig} */
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+
 const nextConfig = {
   async rewrites() {
     return [
       {
         source: '/api/:path*',
-        destination: 'http://localhost:5000/api/:path*'
+        destination: `${API_URL}/api/:path*`
       },
       {
         source: '/socket.io/:path*',
-        destination: 'http://localhost:5000/socket.io/:path*'
+        destination: `${API_URL}/socket.io/:path*`
       },
       {
         source: '/uploads/:path*',
-        destination: 'http://localhost:5000/uploads/:path*'
+        destination: `${API_URL}/uploads/:path*`
       }
     ]
   },
