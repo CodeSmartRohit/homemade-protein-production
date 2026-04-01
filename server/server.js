@@ -156,32 +156,32 @@ app.use(errorHandler);
 // ===== START SERVER =====
 const PORT = process.env.PORT || 5000;
 
-const startServer = async () => {
-  try {
-    // Initialize Local DB
-    await connectDB();
+// Start listening immediately to avoid health check timeouts on Railway
+server.listen(PORT, () => {
+  const env = process.env.NODE_ENV || 'production';
+  console.log('');
+  console.log('╔══════════════════════════════════════════════╗');
+  console.log('║   🍽️  HOMEMADE Protein API Server            ║');
+  console.log(`║   🚀 Running on port ${String(PORT).padEnd(24)} ║`);
+  console.log(`║   📡 Environment: ${env.padEnd(20)}  ║`);
+  console.log('║   🔌 Socket.io: Active                       ║');
+  console.log('╚══════════════════════════════════════════════╝');
+  console.log('');
 
-    // Seed database with initial data
-    await seedDatabase();
+  // Now handle background initialization
+  (async () => {
+    try {
+      // Initialize Local DB / MongoDB
+      await connectDB();
 
-    // Start server
-    server.listen(PORT, () => {
-      const env = process.env.NODE_ENV || 'production';
-      console.log('');
-      console.log('╔══════════════════════════════════════════════╗');
-      console.log('║   🍽️  HOMEMADE Protein API Server            ║');
-      console.log(`║   🚀 Running on port ${String(PORT).padEnd(24)} ║`);
-      console.log(`║   📡 Environment: ${env.padEnd(20)}  ║`);
-      console.log('║   🔌 Socket.io: Active                       ║');
-      console.log('╚══════════════════════════════════════════════╝');
-      console.log('');
-    });
-  } catch (error) {
-    console.error('❌ Failed to start server:', error.message);
-    process.exit(1);
-  }
-};
-
-startServer();
+      // Seed database with initial data
+      await seedDatabase();
+      
+      console.log('✅ Background initialization complete');
+    } catch (error) {
+      console.error('⚠️ Background initialization failed:', error.message);
+    }
+  })();
+});
 
 module.exports = { app, server, io };

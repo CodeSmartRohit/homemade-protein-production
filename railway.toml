@@ -3,4 +3,8 @@ builder = "NIXPACKS"
 buildCommand = "cd server && npm install"
 
 [deploy]
-startCommand = "cd server && npm start"
+startCommand = "node server/server.js"
+healthCheckPath = "/api/health"
+healthCheckTimeout = 100
+restartPolicy = "on-failure"
+maxRetries = 5
