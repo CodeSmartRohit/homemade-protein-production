@@ -1,11 +1,11 @@
 'use client';
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 
-export default function RegisterPage() {
+function RegisterForm() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -152,5 +152,13 @@ export default function RegisterPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center text-amber-500">Loading...</div>}>
+      <RegisterForm />
+    </Suspense>
   );
 }
