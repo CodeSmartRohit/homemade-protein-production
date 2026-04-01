@@ -82,8 +82,7 @@ exports.verifyPayment = async (req, res, next) => {
     if (order.status === 'pending') {
       newStatusHistory.push({
         status: 'confirmed',
-        note: 'Payment verified and auto-confirmed',
-        date: new Date().toISOString()
+        note: 'Payment verified and auto-confirmed'
       });
     }
 

@@ -11,7 +11,11 @@ const generateOrderNumber = () => {
  */
 exports.createOrder = async (req, res, next) => {
   try {
-    const { items, deliveryAddress, deliveryType, specialInstructions, paymentMethod } = req.body;
+    let { items, deliveryAddress, deliveryType, specialInstructions, paymentMethod } = req.body;
+
+    if (paymentMethod === 'cash') paymentMethod = 'cod';
+    if (paymentMethod === 'card' || paymentMethod === 'razorpay') paymentMethod = 'online';
+    if (!paymentMethod) paymentMethod = 'online';
 
     if (!items || items.length === 0) {
       return res.status(400).json({ success: false, message: 'Order must have at least one item.' });
@@ -66,16 +70,16 @@ exports.createOrder = async (req, res, next) => {
       deliveryAddress,
       deliveryType: deliveryType || 'delivery',
       specialInstructions,
-      paymentMethod: paymentMethod || 'razorpay',
+      paymentMethod: paymentMethod,
       paymentStatus: paymentMethod === 'cod' ? 'pending' : 'pending',
       status: paymentMethod === 'cod' ? 'confirmed' : 'pending',
       statusHistory: paymentMethod === 'cod' 
         ? [
-            { status: 'pending', note: 'Order placed', date: new Date().toISOString() },
-            { status: 'confirmed', note: 'COD Auto-Confirmed', date: new Date().toISOString() }
+            { status: 'pending', note: 'Order placed' },
+            { status: 'confirmed', note: 'COD Auto-Confirmed' }
           ]
         : [
-            { status: 'pending', note: 'Order placed', date: new Date().toISOString() }
+            { status: 'pending', note: 'Order placed' }
           ],
       estimatedDeliveryTime: new Date(Date.now() + 45 * 60 * 1000).toISOString(),
     });
