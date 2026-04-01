@@ -39,7 +39,7 @@ export default function CheckoutPage() {
     } else if (user?.addresses) {
       setAddresses(user.addresses);
       const defaultAddr = user.addresses.find(a => a.isDefault) || user.addresses[0];
-      if (defaultAddr) setSelectedAddress(defaultAddr._id);
+      if (defaultAddr) setSelectedAddress(defaultAddr._id || defaultAddr.street);
     }
   }, [user, isAuthenticated, authLoading, router]);
 
@@ -78,7 +78,7 @@ export default function CheckoutPage() {
           quantity: item.quantity,
           price: item.product.price
         })),
-        deliveryAddress: deliveryType === 'delivery' ? addresses.find(a => a._id === selectedAddress) : undefined,
+        deliveryAddress: deliveryType === 'delivery' ? addresses.find(a => (a._id || a.street) === selectedAddress) : undefined,
         deliveryType,
         paymentMethod,
         specialInstructions
@@ -219,9 +219,9 @@ export default function CheckoutPage() {
                     <div className="space-y-4">
                       {addresses.map((addr) => (
                         <label 
-                          key={addr._id} 
+                          key={addr._id || addr.street} 
                           className={`flex items-start p-4 rounded-xl border cursor-pointer transition-all ${
-                            selectedAddress === addr._id 
+                            selectedAddress === (addr._id || addr.street) 
                               ? 'border-amber-500 bg-amber-900/40' 
                               : 'border-amber-900 hover:border-amber-700 bg-amber-950/20'
                           }`}
@@ -229,8 +229,8 @@ export default function CheckoutPage() {
                           <input 
                             type="radio" 
                             name="address" 
-                            checked={selectedAddress === addr._id}
-                            onChange={() => setSelectedAddress(addr._id)}
+                            checked={selectedAddress === (addr._id || addr.street)}
+                            onChange={() => setSelectedAddress(addr._id || addr.street)}
                             className="mt-1 form-radio text-amber-500 bg-amber-950 border-amber-800 focus:ring-amber-500" 
                           />
                           <div className="ml-4">
