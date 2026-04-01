@@ -184,7 +184,7 @@ export default function OrderDetailPage({ params }) {
 
       {/* Main Order Status Tracker */}
       <div className="mb-12 shadow-2xl rounded-2xl">
-        <OrderStatusTracker status={order.status} />
+        <OrderStatusTracker status={order.status} createdAt={order.createdAt} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">

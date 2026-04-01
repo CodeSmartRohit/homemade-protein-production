@@ -9,9 +9,14 @@ const statusMap = {
   delivered: { index: 5, label: 'Delivered', icon: FiHome },
 };
 
-export default function OrderStatusTracker({ status }) {
+export default function OrderStatusTracker({ status, createdAt }) {
   const currentStatusIndex = statusMap[status]?.index ?? -1;
   const isCancelled = status === 'cancelled';
+  const isDelivered = status === 'delivered';
+
+  // Calculate generic Estimated Delivery Time (45 mins from order creation)
+  const estimatedDelivery = createdAt ? new Date(new Date(createdAt).getTime() + 45 * 60000) : null;
+
 
   if (isCancelled) {
     return (
@@ -31,7 +36,22 @@ export default function OrderStatusTracker({ status }) {
 
   return (
     <div className="bg-amber-950/20 border border-amber-900/30 p-8 rounded-2xl backdrop-blur">
-      <h3 className="text-2xl font-playfair font-bold text-amber-50 mb-8 tracking-wide">Track Order</h3>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
+        <h3 className="text-2xl font-playfair font-bold text-amber-50 tracking-wide">Track Order</h3>
+        {estimatedDelivery && !isCancelled && !isDelivered && (
+          <div className="bg-amber-900/40 border border-amber-500/30 px-4 py-2 rounded-xl">
+             <p className="text-amber-100/60 text-xs uppercase tracking-wider font-bold mb-0.5">Estimated Arrival</p>
+             <p className="text-amber-400 font-bold font-mono text-lg">
+                ~{estimatedDelivery.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+             </p>
+          </div>
+        )}
+        {isDelivered && (
+          <div className="bg-green-900/40 border border-green-500/30 px-4 py-2 rounded-xl text-green-400 font-bold flex items-center gap-2">
+             <FiCheck /> Delivered
+          </div>
+        )}
+      </div>
       
       <div className="relative">
         <div className="absolute top-1/2 -mt-1 left-4 right-4 h-2 bg-amber-950/80 rounded-full border border-amber-900 overflow-hidden shadow-inner hidden md:block">

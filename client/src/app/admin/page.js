@@ -4,7 +4,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
-import { FiUsers, FiShoppingBag, FiDollarSign, FiActivity, FiTrendingUp, FiMessageSquare, FiPhone, FiMail, FiCheckCircle, FiClock } from 'react-icons/fi';
+import { FiUsers, FiShoppingBag, FiDollarSign, FiActivity, FiTrendingUp, FiMessageSquare, FiPhone, FiMail, FiCheckCircle, FiClock, FiMapPin } from 'react-icons/fi';
 import { socket, connectSocket } from '@/lib/socket';
 
 export default function AdminDashboard() {
@@ -267,11 +267,20 @@ export default function AdminDashboard() {
                       <tr key={o._id} className="hover:bg-amber-900/20 transition-colors">
                         <td className="p-4 font-mono text-amber-400 font-bold">{o.orderNumber || o._id.substring(o._id.length-6)}</td>
                         <td className="p-4 text-amber-100/70">{new Date(o.createdAt).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</td>
-                        <td className="p-4">
+                        <td className="p-4 max-w-xs whitespace-normal">
                            <div className="font-medium text-amber-50">{o.customer?.name || 'Unknown'}</div>
-                           <div className="text-[10px] text-amber-100/40 flex items-center gap-2 mt-1">
-                              <span className="flex items-center gap-0.5"><FiMail /> {o.customer?.email}</span>
-                              {o.customer?.phone && <span className="flex items-center gap-0.5"><FiPhone /> {o.customer.phone}</span>}
+                           <div className="text-xs text-amber-100/40 flex flex-col gap-1 mt-1">
+                              <span className="flex items-center gap-1"><FiMail className="flex-shrink-0" /> <span className="truncate">{o.customer?.email}</span></span>
+                              {o.customer?.phone && <span className="flex items-center gap-1"><FiPhone className="flex-shrink-0" /> {o.customer.phone}</span>}
+                              {o.deliveryAddress && (
+                                <span className="flex items-start gap-1 font-bold text-amber-400 mt-1">
+                                   <FiMapPin className="mt-0.5 flex-shrink-0" /> 
+                                   <span className="leading-tight text-left">
+                                      {o.deliveryAddress.street}, {o.deliveryAddress.city}, {o.deliveryAddress.state} {o.deliveryAddress.zipCode}
+                                      {o.deliveryAddress.type && <span className="ml-1 opacity-60">({o.deliveryAddress.type})</span>}
+                                   </span>
+                                </span>
+                              )}
                            </div>
                         </td>
                         <td className="p-4">
