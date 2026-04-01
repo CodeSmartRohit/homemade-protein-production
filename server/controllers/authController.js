@@ -253,18 +253,19 @@ exports.getMe = async (req, res) => {
  */
 exports.updateProfile = async (req, res, next) => {
   try {
-    const { name, phone, avatar } = req.body;
+    const { name, phone, avatar, addresses } = req.body;
     const updates = {};
     if (name) updates.name = name;
     if (phone) updates.phone = phone;
     if (avatar) updates.avatar = avatar;
+    if (addresses) updates.addresses = addresses;
 
     // Handle avatar upload
     if (req.file) {
       updates.avatar = `/uploads/avatars/${req.file.filename}`;
     }
 
-    const user = await User.findByIdAndUpdate(req.user._id, updates);
+    const user = await User.findByIdAndUpdate(req.user._id, updates, { new: true });
 
     res.json({
       success: true,
