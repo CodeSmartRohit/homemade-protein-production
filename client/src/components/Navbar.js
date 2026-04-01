@@ -93,7 +93,7 @@ export default function Navbar() {
             )}
 
             {/* Auth/Profile */}
-            <div className="hidden md:block">
+            <div className="hidden md:flex items-center space-x-3">
               {isAuthenticated ? (
                 <div className="relative group">
                   <button className="flex items-center space-x-2 text-sm text-amber-100 hover:text-amber-400">
@@ -113,12 +113,20 @@ export default function Navbar() {
                   </div>
                 </div>
               ) : (
-                <Link
-                  href="/auth/login"
-                  className="px-5 py-2 text-sm font-medium border border-amber-500/50 text-amber-400 rounded-full hover:bg-amber-500 hover:text-amber-950 transition-colors"
-                >
-                  Sign In
-                </Link>
+                <>
+                  <Link
+                    href="/auth/login"
+                    className="px-4 py-2 text-sm font-medium text-amber-100 hover:text-amber-400 transition-colors"
+                  >
+                    Sign In
+                  </Link>
+                  <Link
+                    href="/auth/register"
+                    className="px-5 py-2 text-sm font-bold bg-amber-500 text-amber-950 rounded-full hover:bg-amber-400 transition-colors shadow-lg shadow-amber-500/20"
+                  >
+                    Join Now
+                  </Link>
+                </>
               )}
             </div>
 
@@ -178,13 +186,22 @@ export default function Navbar() {
                   </button>
                 </>
               ) : (
-                <Link
-                  href="/auth/login"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="px-5 py-3 text-center text-sm font-bold bg-amber-500 text-amber-950 rounded-full"
-                >
-                  Sign In
-                </Link>
+                <div className="flex flex-col space-y-3">
+                  <Link
+                    href="/auth/login"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="px-5 py-3 text-center text-sm font-bold border border-amber-900 text-amber-100 rounded-full"
+                  >
+                    Sign In
+                  </Link>
+                  <Link
+                    href="/auth/register"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="px-5 py-3 text-center text-sm font-bold bg-amber-500 text-amber-950 rounded-full"
+                  >
+                    Join Now
+                  </Link>
+                </div>
               )}
             </div>
           </div>

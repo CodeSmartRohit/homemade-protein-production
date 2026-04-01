@@ -44,9 +44,13 @@ const seedDatabase = async () => {
       isActive: true,
     };
 
-    const chefDoc = await User.findOneAndUpdate(chefQuery, chefData, { upsert: true, new: true });
-    if (chefDoc) {
-      console.log(`✅ Chef account synced (${chefData.email} / 123456)`);
+    let chefDoc = await User.findOne(chefQuery);
+    if (!chefDoc) {
+       chefDoc = await User.create(chefData);
+       console.log(`✅ New Chef account created (${chefData.email} / 123456)`);
+    } else {
+       await User.findOneAndUpdate(chefQuery, chefData);
+       console.log(`✅ Chef account updated (${chefData.email} / 123456)`);
     }
 
     // Seed admin account if none exists or update password
@@ -65,9 +69,13 @@ const seedDatabase = async () => {
       isActive: true,
     };
 
-    const adminDoc = await User.findOneAndUpdate(adminQuery, adminData, { upsert: true, new: true });
-    if (adminDoc) {
-      console.log(`✅ Admin account synced (${adminData.email} / ROHITCODESMARTLY!)`);
+    let adminDoc = await User.findOne(adminQuery);
+    if (!adminDoc) {
+       adminDoc = await User.create(adminData);
+       console.log(`✅ New Admin account created (${adminData.email} / ROHITCODESMARTLY!)`);
+    } else {
+       await User.findOneAndUpdate(adminQuery, adminData);
+       console.log(`✅ Admin account updated (${adminData.email} / ROHITCODESMARTLY!)`);
     }
 
     console.log('✅ Database seeding complete');
