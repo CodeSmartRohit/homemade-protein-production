@@ -28,7 +28,7 @@ const seedDatabase = async () => {
     if (!chefExists) {
       const salt = await bcrypt.genSalt(12);
       const hashedPassword = await bcrypt.hash('123456', salt);
-      
+
       await User.create({
         name: 'Chef Rohit',
         email: 'chef@gmail.com',
@@ -51,7 +51,7 @@ const seedDatabase = async () => {
         name: 'Admin',
         email: 'rp111monster@gmail.com',
         password: hashedPassword,
-        phone: '8888888888',
+        phone: '9340623657',
         role: 'admin',
         isVerified: true,
         isActive: true,
