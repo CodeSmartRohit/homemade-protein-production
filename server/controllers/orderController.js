@@ -68,8 +68,15 @@ exports.createOrder = async (req, res, next) => {
       specialInstructions,
       paymentMethod: paymentMethod || 'razorpay',
       paymentStatus: paymentMethod === 'cod' ? 'pending' : 'pending',
-      status: 'pending',
-      statusHistory: [{ status: 'pending', note: 'Order placed', date: new Date().toISOString() }],
+      status: paymentMethod === 'cod' ? 'confirmed' : 'pending',
+      statusHistory: paymentMethod === 'cod' 
+        ? [
+            { status: 'pending', note: 'Order placed', date: new Date().toISOString() },
+            { status: 'confirmed', note: 'COD Auto-Confirmed', date: new Date().toISOString() }
+          ]
+        : [
+            { status: 'pending', note: 'Order placed', date: new Date().toISOString() }
+          ],
       estimatedDeliveryTime: new Date(Date.now() + 45 * 60 * 1000).toISOString(),
     });
 

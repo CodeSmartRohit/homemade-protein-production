@@ -78,10 +78,21 @@ exports.verifyPayment = async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Order not found.' });
     }
 
+    const newStatusHistory = [...(order.statusHistory || [])];
+    if (order.status === 'pending') {
+      newStatusHistory.push({
+        status: 'confirmed',
+        note: 'Payment verified and auto-confirmed',
+        date: new Date().toISOString()
+      });
+    }
+
     await Order.findByIdAndUpdate(orderId, {
         razorpayPaymentId: razorpay_payment_id,
         razorpaySignature: razorpay_signature,
-        paymentStatus: 'paid'
+        paymentStatus: 'paid',
+        status: order.status === 'pending' ? 'confirmed' : order.status,
+        statusHistory: newStatusHistory
     });
 
     // Emit socket event
