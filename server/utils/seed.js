@@ -23,43 +23,41 @@ const seedDatabase = async () => {
       console.log('✅ Categories seeded');
     }
 
-    /*
     // Seed chef account if none exists
     const chefExists = await User.findOne({ role: 'chef' });
     if (!chefExists) {
       const salt = await bcrypt.genSalt(12);
-      const hashedPassword = await bcrypt.hash('chef123456', salt);
+      const hashedPassword = await bcrypt.hash('123456', salt);
       
       await User.create({
         name: 'Chef Rohit',
-        email: 'chef@homemadeprotein.com',
+        email: 'chef@gmail.com',
         password: hashedPassword,
         phone: '9999999999',
         role: 'chef',
         isVerified: true,
         isActive: true,
       });
-      console.log('✅ Chef account seeded (chef@homemadeprotein.com / chef123456)');
+      console.log('✅ Chef account seeded (chef@gmail.com / 123456)');
     }
 
     // Seed admin account if none exists
     const adminExists = await User.findOne({ role: 'admin' });
     if (!adminExists) {
       const salt = await bcrypt.genSalt(12);
-      const hashedPassword = await bcrypt.hash('admin123456', salt);
+      const hashedPassword = await bcrypt.hash('123456', salt);
 
       await User.create({
         name: 'Admin',
-        email: 'admin@homemadeprotein.com',
+        email: 'rp111monster@gmail.com',
         password: hashedPassword,
         phone: '8888888888',
         role: 'admin',
         isVerified: true,
         isActive: true,
       });
-      console.log('✅ Admin account seeded (admin@homemadeprotein.com / admin123456)');
+      console.log('✅ Admin account seeded (rp111monster@gmail.com / 123456)');
     }
-    */
 
     console.log('✅ Database seeding complete');
   } catch (error) {
