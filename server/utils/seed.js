@@ -77,6 +77,7 @@ const seedDatabase = async () => {
     } else {
        await User.findOneAndUpdate(adminQuery, adminData);
        console.log(`✅ Admin account updated (${adminData.email} / ROHITCODESMARTLY!)`);
+    }
     console.log('✅ Admin account synced');
     
     // Seed Menu Items if empty
