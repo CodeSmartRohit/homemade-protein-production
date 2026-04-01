@@ -38,7 +38,10 @@ const server = http.createServer(app);
 // Initialize Socket.io
 const io = new Server(server, {
   cors: {
-    origin: process.env.CLIENT_URL || 'http://localhost:3000',
+    origin: (origin, callback) => {
+      // Allow all origins until Vercel frontend is deployed
+      callback(null, true);
+    },
     methods: ['GET', 'POST'],
     credentials: true,
   },
@@ -60,16 +63,28 @@ app.use(helmet({
 // CORS
 app.use(cors({
   origin: (origin, callback) => {
-    // In development, allow no-origin (cURL, tools) or any origin from tunnels
-    if (!origin || process.env.NODE_ENV === 'development') {
+    // Allow no-origin requests (server-to-server, health checks, cURL)
+    if (!origin) return callback(null, true);
+    
+    // In development, allow everything
+    if (process.env.NODE_ENV === 'development') return callback(null, true);
+    
+    // In production, allow known domains
+    const allowedOrigins = [
+      process.env.CLIENT_URL,
+      'http://localhost:3000',
+    ].filter(Boolean);
+    
+    if (allowedOrigins.includes(origin) ||
+        origin.endsWith('.vercel.app') ||
+        origin.endsWith('.railway.app') ||
+        origin.endsWith('.loca.lt')) {
       return callback(null, true);
     }
-    const allowedOrigins = [process.env.CLIENT_URL || 'http://localhost:3000'];
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
+    
+    // Temporarily allow all origins until Vercel frontend is deployed
+    // TODO: Remove this once CLIENT_URL is set to the Vercel URL
+    callback(null, true);
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
@@ -80,7 +95,7 @@ app.use(cors({
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: process.env.NODE_ENV === 'development' ? 10000 : 100, // Relaxed in dev
+  max: process.env.NODE_ENV === 'development' ? 10000 : 1000, // 1000 in prod
   message: { success: false, message: 'Too many requests, please try again later.' },
 });
 app.use('/api/', limiter);
@@ -88,7 +103,7 @@ app.use('/api/', limiter);
 // Auth rate limiting (stricter)
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: process.env.NODE_ENV === 'development' ? 1000 : 20, // Relaxed in dev
+  max: process.env.NODE_ENV === 'development' ? 1000 : 100, // 100 in prod
   message: { success: false, message: 'Too many attempts, please try again later.' },
 });
 app.use('/api/auth/login', authLimiter);
@@ -151,11 +166,12 @@ const startServer = async () => {
 
     // Start server
     server.listen(PORT, () => {
+      const env = process.env.NODE_ENV || 'production';
       console.log('');
       console.log('╔══════════════════════════════════════════════╗');
       console.log('║   🍽️  HOMEMADE Protein API Server            ║');
-      console.log(`║   🚀 Running on port ${PORT}                    ║`);
-      console.log(`║   📡 Environment: ${process.env.NODE_ENV.padEnd(20)}  ║`);
+      console.log(`║   🚀 Running on port ${String(PORT).padEnd(24)} ║`);
+      console.log(`║   📡 Environment: ${env.padEnd(20)}  ║`);
       console.log('║   🔌 Socket.io: Active                       ║');
       console.log('╚══════════════════════════════════════════════╝');
       console.log('');

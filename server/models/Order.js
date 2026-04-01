@@ -41,4 +41,19 @@ orderSchema.index({ status: 1 });
 orderSchema.index({ createdAt: -1 });
 orderSchema.index({ orderNumber: 1 });
 
-module.exports = mongoose.models.Order || (mongoose.connection.readyState === 1 ? mongoose.model('Order', orderSchema) : db.orders);
+// Lazy model resolution — decides at call-time, not require-time
+function getModel() {
+  if (mongoose.connection.readyState === 1) {
+    return mongoose.models.Order || mongoose.model('Order', orderSchema);
+  }
+  return db.orders;
+}
+
+module.exports = new Proxy(function(){}, {
+  get: (_, prop) => {
+    const model = getModel();
+    const val = model[prop];
+    return typeof val === 'function' ? val.bind(model) : val;
+  },
+  apply: (_, thisArg, args) => getModel()(...args),
+});

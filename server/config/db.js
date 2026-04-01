@@ -6,11 +6,11 @@ const connectDB = async () => {
     // If MONGODB_URI is provided in .env, connect to it
     if (process.env.MONGODB_URI) {
       const options = {
-        maxPoolSize: 50, // Allow up to 50 concurrent connections
-        minPoolSize: 10, // Maintain a minimum of 10 connections
-        socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
-        serverSelectionTimeoutMS: 5000, // Fail fast if server is unreachable
-        heartbeatFrequencyMS: 10000, // Check server health every 10 seconds
+        maxPoolSize: 50,
+        minPoolSize: 10,
+        socketTimeoutMS: 45000,
+        serverSelectionTimeoutMS: 10000, // 10 sec timeout (increased for cloud)
+        heartbeatFrequencyMS: 10000,
       };
       const conn = await mongoose.connect(process.env.MONGODB_URI, options);
       console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
@@ -22,8 +22,12 @@ const connectDB = async () => {
     localDb.init();
     return true;
   } catch (error) {
-    console.error(`❌ DB Connection Error: ${error.message}`);
-    process.exit(1);
+    console.error(`❌ MongoDB Connection Error: ${error.message}`);
+    console.warn('⚠️ Falling back to Local JSON database...');
+    
+    // Gracefully fall back to local DB instead of crashing
+    localDb.init();
+    return true;
   }
 };
 

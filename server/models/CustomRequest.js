@@ -9,4 +9,19 @@ const customRequestSchema = new mongoose.Schema({
   response: { type: String },
 }, { timestamps: true });
 
-module.exports = mongoose.models.CustomRequest || (mongoose.connection.readyState === 1 ? mongoose.model('CustomRequest', customRequestSchema) : db.requests);
+// Lazy model resolution — decides at call-time, not require-time
+function getModel() {
+  if (mongoose.connection.readyState === 1) {
+    return mongoose.models.CustomRequest || mongoose.model('CustomRequest', customRequestSchema);
+  }
+  return db.requests;
+}
+
+module.exports = new Proxy(function(){}, {
+  get: (_, prop) => {
+    const model = getModel();
+    const val = model[prop];
+    return typeof val === 'function' ? val.bind(model) : val;
+  },
+  apply: (_, thisArg, args) => getModel()(...args),
+});

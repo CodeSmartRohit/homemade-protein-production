@@ -25,5 +25,19 @@ const userSchema = new mongoose.Schema({
 userSchema.index({ role: 1 });
 userSchema.index({ isActive: 1 });
 
-// Export either Mongoose model or Local DB collection
-module.exports = mongoose.models.User || (mongoose.connection.readyState === 1 ? mongoose.model('User', userSchema) : db.users);
+// Lazy model resolution — decides at call-time, not require-time
+function getModel() {
+  if (mongoose.connection.readyState === 1) {
+    return mongoose.models.User || mongoose.model('User', userSchema);
+  }
+  return db.users;
+}
+
+module.exports = new Proxy(function(){}, {
+  get: (_, prop) => {
+    const model = getModel();
+    const val = model[prop];
+    return typeof val === 'function' ? val.bind(model) : val;
+  },
+  apply: (_, thisArg, args) => getModel()(...args),
+});

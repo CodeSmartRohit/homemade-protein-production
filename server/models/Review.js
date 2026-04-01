@@ -8,4 +8,19 @@ const reviewSchema = new mongoose.Schema({
   comment: { type: String, required: true },
 }, { timestamps: true });
 
-module.exports = mongoose.models.Review || (mongoose.connection.readyState === 1 ? mongoose.model('Review', reviewSchema) : db.reviews);
+// Lazy model resolution — decides at call-time, not require-time
+function getModel() {
+  if (mongoose.connection.readyState === 1) {
+    return mongoose.models.Review || mongoose.model('Review', reviewSchema);
+  }
+  return db.reviews;
+}
+
+module.exports = new Proxy(function(){}, {
+  get: (_, prop) => {
+    const model = getModel();
+    const val = model[prop];
+    return typeof val === 'function' ? val.bind(model) : val;
+  },
+  apply: (_, thisArg, args) => getModel()(...args),
+});

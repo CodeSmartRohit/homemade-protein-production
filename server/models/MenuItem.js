@@ -27,4 +27,19 @@ menuItemSchema.index({ category: 1 });
 menuItemSchema.index({ price: 1 });
 menuItemSchema.index({ isAvailable: 1 });
 
-module.exports = mongoose.models.MenuItem || (mongoose.connection.readyState === 1 ? mongoose.model('MenuItem', menuItemSchema) : db.menuItems);
+// Lazy model resolution — decides at call-time, not require-time
+function getModel() {
+  if (mongoose.connection.readyState === 1) {
+    return mongoose.models.MenuItem || mongoose.model('MenuItem', menuItemSchema);
+  }
+  return db.menuItems;
+}
+
+module.exports = new Proxy(function(){}, {
+  get: (_, prop) => {
+    const model = getModel();
+    const val = model[prop];
+    return typeof val === 'function' ? val.bind(model) : val;
+  },
+  apply: (_, thisArg, args) => getModel()(...args),
+});
