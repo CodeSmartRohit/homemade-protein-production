@@ -23,52 +23,51 @@ const seedDatabase = async () => {
       console.log('✅ Categories seeded');
     }
 
+    const mongoose = require('mongoose');
+    const isMongo = mongoose.connection.readyState === 1;
+    const dbMode = isMongo ? '☁️ MongoDB' : '📁 Local JSON DB';
+
+    console.log(`📡 Seeding in ${dbMode} mode...`);
+
     // Seed chef account if none exists or update password
-    const chefUser = await User.findOne({ role: 'chef' });
     const chefSalt = await bcrypt.genSalt(12);
     const chefHashedPassword = await bcrypt.hash('123456', chefSalt);
 
-    if (!chefUser) {
-      await User.create({
-        name: 'Chef Rohit',
-        email: 'chef@gmail.com',
-        password: chefHashedPassword,
-        phone: '9340623657',
-        role: 'chef',
-        isVerified: true,
-        isActive: true,
-      });
-      console.log('✅ Chef account created (chef@gmail.com / 123456)');
-    } else {
-      chefUser.email = 'chef@gmail.com'; // In case it was mistakenly changed
-      chefUser.password = chefHashedPassword;
-      chefUser.phone = '9340623657';
-      await chefUser.save();
-      console.log('✅ Chef account updated to new password: 123456');
+    const chefQuery = { role: 'chef' };
+    const chefData = {
+      name: 'Chef Rohit',
+      email: 'chef@gmail.com',
+      password: chefHashedPassword,
+      phone: '9340623657',
+      role: 'chef',
+      isVerified: true,
+      isActive: true,
+    };
+
+    const chefDoc = await User.findOneAndUpdate(chefQuery, chefData, { upsert: true, new: true });
+    if (chefDoc) {
+      console.log(`✅ Chef account synced (${chefData.email} / 123456)`);
     }
 
     // Seed admin account if none exists or update password
-    const adminUser = await User.findOne({ role: 'admin' });
+    console.log(`🔍 Checking for Admin: rp111monster@gmail.com...`);
     const adminSalt = await bcrypt.genSalt(12);
     const adminHashedPassword = await bcrypt.hash('ROHITCODESMARTLY!', adminSalt);
 
-    if (!adminUser) {
-      await User.create({
-        name: 'Admin',
-        email: 'rp111monster@gmail.com',
-        password: adminHashedPassword,
-        phone: '9340623657',
-        role: 'admin',
-        isVerified: true,
-        isActive: true,
-      });
-      console.log('✅ Admin account created (rp111monster@gmail.com / ROHITCODESMARTLY!)');
-    } else {
-      adminUser.email = 'rp111monster@gmail.com'; // Ensure unique email
-      adminUser.password = adminHashedPassword;
-      adminUser.phone = '9340623657';
-      await adminUser.save();
-      console.log('✅ Admin account updated to new password: ROHITCODESMARTLY!');
+    const adminQuery = { role: 'admin' };
+    const adminData = {
+      name: 'Admin',
+      email: 'rp111monster@gmail.com',
+      password: adminHashedPassword,
+      phone: '9340623657',
+      role: 'admin',
+      isVerified: true,
+      isActive: true,
+    };
+
+    const adminDoc = await User.findOneAndUpdate(adminQuery, adminData, { upsert: true, new: true });
+    if (adminDoc) {
+      console.log(`✅ Admin account synced (${adminData.email} / ROHITCODESMARTLY!)`);
     }
 
     console.log('✅ Database seeding complete');

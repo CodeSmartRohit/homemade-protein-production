@@ -174,6 +174,11 @@ server.listen(PORT, () => {
       // Initialize Local DB / MongoDB
       await connectDB();
 
+      const mongoose = require('mongoose');
+      const isMongo = mongoose.connection.readyState === 1;
+      const dbStatus = isMongo ? '☁️ Cloud MongoDB' : '📁 Local JSON DB';
+      console.log(`📡 Database Mode: ${dbStatus}`);
+
       // Seed database with initial data
       await seedDatabase();
       
