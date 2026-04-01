@@ -1,5 +1,5 @@
 /** @type {import('next').NextConfig} */
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://homemade-protein-production-production.up.railway.app';
 
 const nextConfig = {
   async rewrites() {
