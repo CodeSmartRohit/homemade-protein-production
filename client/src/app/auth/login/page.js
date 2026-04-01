@@ -30,7 +30,8 @@ function LoginForm() {
         router.push(redirect);
       }
     } catch (err) {
-      toast.error(err.response?.data?.error || 'Invalid credentials');
+      console.error('Login error:', err);
+      toast.error(err.response?.data?.message || err.response?.data?.error || err.message || 'Invalid credentials');
       setLoading(false);
     }
   };

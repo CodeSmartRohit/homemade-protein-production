@@ -1,8 +1,15 @@
 import axios from 'axios';
 import Cookies from 'js-cookie';
 
+const getBaseUrl = () => {
+  let url = process.env.NEXT_PUBLIC_API_URL || 'https://homemade-protein-production-production.up.railway.app/api';
+  if (url.endsWith('/')) url = url.slice(0, -1);
+  if (!url.endsWith('/api')) url = `${url}/api`;
+  return url;
+};
+
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'https://homemade-protein-production-production.up.railway.app/api',
+  baseURL: getBaseUrl(),
   withCredentials: true,
 });
 
