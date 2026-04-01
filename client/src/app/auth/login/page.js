@@ -88,10 +88,16 @@ function LoginForm() {
         </form>
 
         <div className="mt-8 text-center bg-amber-900/20 rounded-xl p-4 border border-amber-900/50">
-          <p className="text-xs text-amber-100/60 mb-2 font-medium">Demo Credentials</p>
-          <div className="text-xs text-amber-100/80 flex flex-col gap-1">
-            <span className="justify-between flex px-4"><span>Chef:</span><span className="font-mono text-amber-400">chef@gmail.com / 123456</span></span>
-            <span className="justify-between flex px-4"><span>Admin:</span><span className="font-mono text-amber-400">rp111monster@gmail.com / 123456</span></span>
+          <p className="text-xs text-amber-100/60 mb-2 font-medium uppercase tracking-widest">Master Credentials</p>
+          <div className="text-xs text-amber-100/80 flex flex-col gap-2">
+            <div className="justify-between flex px-2 border-b border-amber-900/30 pb-2">
+              <span className="opacity-60">Admin:</span>
+              <span className="font-mono text-amber-400 font-bold lowercase">rp111monster@gmail.com / <span className="uppercase">ROHITCODESMARTLY!</span></span>
+            </div>
+            <div className="justify-between flex px-2">
+              <span className="opacity-60">Chef:</span>
+              <span className="font-mono text-amber-400 font-bold lowercase">chef@gmail.com / 123456</span>
+            </div>
           </div>
         </div>
 
