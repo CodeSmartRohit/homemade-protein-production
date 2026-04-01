@@ -1,9 +1,0 @@
-[build]
-builder = "NIXPACKS"
-
-[deploy]
-startCommand = "npm start"
-healthCheckPath = "/api/health"
-healthCheckTimeout = 100
-restartPolicy = "on-failure"
-maxRetries = 5

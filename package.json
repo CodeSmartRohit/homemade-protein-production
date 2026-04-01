@@ -1,12 +1,30 @@
 {
-  "name": "homemade-protein-root",
+  "name": "homemade-protein-production",
   "version": "1.0.0",
-  "description": "Root orchestrator for HOMEMADE Protein",
+  "description": "HOMEMADE Protein - Food Ordering Platform",
+  "main": "server/server.js",
   "scripts": {
     "start": "node server/server.js",
-    "build": "npm install --prefix server",
+    "build": "echo 'No build step needed'",
     "dev": "concurrently \"npm run dev --prefix client\" \"npm run dev --prefix server\"",
     "install:all": "npm install && npm install --prefix client && npm install --prefix server"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-rate-limit": "^7.2.0",
+    "helmet": "^7.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongodb": "^7.1.1",
+    "mongoose": "^8.2.1",
+    "morgan": "^1.10.0",
+    "multer": "^2.1.1",
+    "razorpay": "^2.9.2",
+    "socket.io": "^4.7.4",
+    "uuid": "^13.0.0"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
