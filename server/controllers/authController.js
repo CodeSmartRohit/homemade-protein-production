@@ -6,7 +6,11 @@ const User = require('../models/User');
 // Helper to strip sensitive data
 const sanitizeUser = (user) => {
   if (!user) return null;
-  const { password, refreshToken, ...rest } = user;
+  
+  // Convert Mongoose document to plain JS object if necessary
+  const userObj = user.toObject ? user.toObject() : user;
+  
+  const { password, refreshToken, ...rest } = userObj;
   return rest;
 };
 
