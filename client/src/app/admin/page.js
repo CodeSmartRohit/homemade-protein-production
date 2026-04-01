@@ -276,8 +276,8 @@ export default function AdminDashboard() {
                                 <span className="flex items-start gap-1 font-bold text-amber-400 mt-1">
                                    <FiMapPin className="mt-0.5 flex-shrink-0" /> 
                                    <span className="leading-tight text-left">
-                                      {o.deliveryAddress.street}, {o.deliveryAddress.city}, {o.deliveryAddress.state} {o.deliveryAddress.zipCode}
-                                      {o.deliveryAddress.type && <span className="ml-1 opacity-60">({o.deliveryAddress.type})</span>}
+                                      {o.deliveryAddress.street}, {o.deliveryAddress.city}, {o.deliveryAddress.state} {o.deliveryAddress.pincode}
+                                      {o.deliveryAddress.label && <span className="ml-1 opacity-60">({o.deliveryAddress.label})</span>}
                                    </span>
                                 </span>
                               )}

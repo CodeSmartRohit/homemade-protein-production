@@ -233,10 +233,10 @@ export default function CheckoutPage() {
                             onChange={() => setSelectedAddress(addr._id || addr.street)}
                             className="mt-1 form-radio text-amber-500 bg-amber-950 border-amber-800 focus:ring-amber-500" 
                           />
-                          <div className="ml-4">
-                            <span className="font-bold border-b border-amber-500/50 text-amber-50 pb-0.5">{addr.type}</span>
+                          <div className="ml-4 text-left">
+                            <span className="font-bold border-b border-amber-500/50 text-amber-50 pb-0.5">{addr.label || 'Home'}</span>
                             <p className="text-amber-100/70 mt-2 text-sm">{addr.street}</p>
-                            <p className="text-amber-100/70 text-sm">{addr.city}, {addr.state} {addr.zipCode}</p>
+                            <p className="text-amber-100/70 text-sm">{addr.city}, {addr.state} {addr.pincode}</p>
                           </div>
                         </label>
                       ))}

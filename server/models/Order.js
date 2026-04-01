@@ -7,24 +7,28 @@ const orderSchema = new mongoose.Schema({
   items: [{
     menuItem: { type: mongoose.Schema.Types.ObjectId, ref: 'MenuItem' },
     quantity: { type: Number, required: true },
-    price: { type: Number, required: true }
+    price: { type: Number, required: true },
+    name: String,
+    image: String
   }],
+  subtotal: { type: Number, required: true },
   totalAmount: { type: Number, required: true },
   deliveryFee: { type: Number, default: 0 },
   tax: { type: Number, default: 0 },
   status: { 
     type: String, 
-    enum: ['pending', 'confirmed', 'preparing', 'out-for-delivery', 'delivered', 'cancelled'],
+    enum: ['pending', 'confirmed', 'preparing', 'out_for_delivery', 'delivered', 'cancelled'],
     default: 'pending' 
   },
+  deliveryType: { type: String, enum: ['delivery', 'pickup'], default: 'delivery' },
   paymentMethod: { type: String, enum: ['cod', 'online'], required: true },
   paymentStatus: { type: String, enum: ['pending', 'paid', 'failed'], default: 'pending' },
   deliveryAddress: {
+    label: String,
     street: String,
     city: String,
     state: String,
-    zipCode: String,
-    type: String
+    pincode: String
   },
   specialInstructions: String,
   statusHistory: [{

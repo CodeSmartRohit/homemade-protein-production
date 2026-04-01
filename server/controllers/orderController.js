@@ -67,7 +67,13 @@ exports.createOrder = async (req, res, next) => {
       deliveryFee,
       tax,
       totalAmount,
-      deliveryAddress,
+      deliveryAddress: deliveryAddress ? {
+        label: deliveryAddress.label || deliveryAddress.type,
+        street: deliveryAddress.street,
+        city: deliveryAddress.city,
+        state: deliveryAddress.state,
+        pincode: deliveryAddress.pincode || deliveryAddress.zipCode
+      } : undefined,
       deliveryType: deliveryType || 'delivery',
       specialInstructions,
       paymentMethod: paymentMethod,
