@@ -347,7 +347,8 @@ export default function AdminDashboard() {
                                 <h4 className="font-bold text-amber-50 underline decoration-amber-500/30">{req.title || 'Custom Protein Request'}</h4>
                                 <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${
                                    req.status === 'completed' ? 'bg-green-900/30 text-green-400' :
-                                   req.status === 'cancelled' ? 'bg-red-900/30 text-red-400' :
+                                   req.status === 'accepted' ? 'bg-emerald-900/40 text-emerald-400' :
+                                   req.status === 'rejected' ? 'bg-red-900/30 text-red-400' :
                                    'bg-amber-500/20 text-amber-500'
                                 }`}>
                                    {req.status}
@@ -362,8 +363,8 @@ export default function AdminDashboard() {
                           <div className="flex gap-2">
                             {req.status === 'pending' && (
                               <>
-                                <button onClick={() => handleRequestStatus(req._id, 'approved')} className="bg-green-600 text-white p-2 rounded-lg hover:bg-green-500 transition-colors" title="Approve"><FiCheckCircle /></button>
-                                <button onClick={() => handleRequestStatus(req._id, 'cancelled')} className="bg-red-900/50 text-red-400 p-2 rounded-lg hover:bg-red-900 transition-colors" title="Decline"><FiActivity /></button>
+                                <button onClick={() => handleRequestStatus(req._id, 'accepted')} className="bg-green-600 text-white p-2 rounded-lg hover:bg-green-500 transition-colors" title="Approve"><FiCheckCircle /></button>
+                                <button onClick={() => handleRequestStatus(req._id, 'rejected')} className="bg-red-900/50 text-red-400 p-2 rounded-lg hover:bg-red-900 transition-colors" title="Decline"><FiActivity /></button>
                               </>
                             )}
                           </div>
