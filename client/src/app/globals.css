@@ -1,0 +1,97 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 245, 240, 232;
+  --background-rgb: 13, 10, 7;
+}
+
+@layer base {
+  body {
+    background-color: rgb(var(--background-rgb));
+    color: rgb(var(--foreground-rgb));
+    /* Organic grain texture */
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
+    /* Setting base font size and smoothing */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+@layer components {
+  /* Forms */
+  .input-field {
+    @apply w-full bg-surface-100 border border-border text-text-primary rounded-lg px-4 py-3 placeholder-text-muted transition-all focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary focus:bg-surface-200 shadow-sm shadow-[#0a0805];
+  }
+  
+  /* Buttons */
+  .btn-primary {
+    @apply bg-primary hover:bg-primary-hover text-surface-100 font-semibold py-3 px-6 rounded-full transition-all duration-300 transform hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(212,164,62,0.3)] active:scale-95 flex items-center justify-center;
+  }
+  
+  .btn-outline {
+    @apply border border-primary text-primary hover:bg-primary/10 font-semibold py-3 px-6 rounded-full transition-all duration-300 transform hover:scale-[1.02] active:scale-95 flex items-center justify-center;
+  }
+
+  /* Cards */
+  .glass-card {
+    @apply bg-surface-100/80 backdrop-blur-md border border-white/5 rounded-2xl shadow-xl overflow-hidden shadow-[#000000];
+  }
+  
+  /* Badges */
+  .badge-veg {
+    @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-accent-green/20 text-accent-green border border-accent-green/30;
+  }
+  
+  .badge-nonveg {
+    @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-accent-red/20 text-accent-red border border-accent-red/30;
+  }
+}
+
+/* Custom Webkit Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0D0A07;
+}
+::-webkit-scrollbar-thumb {
+  background: #2A2318;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #D4A43E;
+}
+
+/* 3D Menu Utilities */
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+.perspective-2000 {
+  perspective: 2000px;
+}
+
+.transform-style-3d {
+  transform-style: preserve-3d;
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) translateZ(50px); }
+  50% { transform: translateY(-10px) translateZ(70px); }
+}
+
+.animate-float-3d {
+  animation: float 4s ease-in-out infinite;
+}
+
+.glow-hover:hover {
+  box-shadow: 0 0 30px rgba(212, 164, 62, 0.4);
+}
+
