@@ -23,26 +23,32 @@ const seedDatabase = async () => {
       console.log('✅ Categories seeded');
     }
 
-    // Seed chef account if none exists
-    const chefExists = await User.findOne({ role: 'chef' });
-    if (!chefExists) {
-      const salt = await bcrypt.genSalt(12);
-      const hashedPassword = await bcrypt.hash('123456', salt);
+    // Seed chef account if none exists or update password
+    const chefUser = await User.findOne({ role: 'chef' });
+    const chefSalt = await bcrypt.genSalt(12);
+    const chefHashedPassword = await bcrypt.hash('123456', chefSalt);
 
+    if (!chefUser) {
       await User.create({
         name: 'Chef Rohit',
         email: 'chef@gmail.com',
-        password: hashedPassword,
-        phone: '9999999999',
+        password: chefHashedPassword,
+        phone: '9340623657',
         role: 'chef',
         isVerified: true,
         isActive: true,
       });
-      console.log('✅ Chef account seeded (chef@gmail.com / 123456)');
+      console.log('✅ Chef account created (chef@gmail.com / 123456)');
+    } else {
+      chefUser.email = 'chef@gmail.com'; // In case it was mistakenly changed
+      chefUser.password = chefHashedPassword;
+      chefUser.phone = '9340623657';
+      await chefUser.save();
+      console.log('✅ Chef account updated to new password: 123456');
     }
 
     // Seed admin account if none exists or update password
-    const adminUser = await User.findOne({ email: 'rp111monster@gmail.com' });
+    const adminUser = await User.findOne({ role: 'admin' });
     const adminSalt = await bcrypt.genSalt(12);
     const adminHashedPassword = await bcrypt.hash('ROHITCODESMARTLY!', adminSalt);
 
@@ -58,6 +64,7 @@ const seedDatabase = async () => {
       });
       console.log('✅ Admin account created (rp111monster@gmail.com / ROHITCODESMARTLY!)');
     } else {
+      adminUser.email = 'rp111monster@gmail.com'; // Ensure unique email
       adminUser.password = adminHashedPassword;
       adminUser.phone = '9340623657';
       await adminUser.save();
