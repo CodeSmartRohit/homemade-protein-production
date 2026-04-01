@@ -41,22 +41,27 @@ const seedDatabase = async () => {
       console.log('✅ Chef account seeded (chef@gmail.com / 123456)');
     }
 
-    // Seed admin account if none exists
-    const adminExists = await User.findOne({ role: 'admin' });
-    if (!adminExists) {
-      const salt = await bcrypt.genSalt(12);
-      const hashedPassword = await bcrypt.hash('123456', salt);
+    // Seed admin account if none exists or update password
+    const adminUser = await User.findOne({ email: 'rp111monster@gmail.com' });
+    const adminSalt = await bcrypt.genSalt(12);
+    const adminHashedPassword = await bcrypt.hash('ROHITCODESMARTLY!', adminSalt);
 
+    if (!adminUser) {
       await User.create({
         name: 'Admin',
         email: 'rp111monster@gmail.com',
-        password: hashedPassword,
+        password: adminHashedPassword,
         phone: '9340623657',
         role: 'admin',
         isVerified: true,
         isActive: true,
       });
-      console.log('✅ Admin account seeded (rp111monster@gmail.com / 123456)');
+      console.log('✅ Admin account created (rp111monster@gmail.com / ROHITCODESMARTLY!)');
+    } else {
+      adminUser.password = adminHashedPassword;
+      adminUser.phone = '9340623657';
+      await adminUser.save();
+      console.log('✅ Admin account updated to new password: ROHITCODESMARTLY!');
     }
 
     console.log('✅ Database seeding complete');
