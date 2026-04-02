@@ -243,10 +243,10 @@ export default function AdminDashboard() {
                         <td className="p-4 text-amber-100/50 text-sm">{new Date(u.createdAt).toLocaleDateString()}</td>
                         <td className="p-4">
                            <select
-                              value={u.role}
-                              onChange={(e) => handleRoleChange(u._id, e.target.value)}
-                              disabled={u.email === 'rp111monster@gmail.com' && u.role === 'admin'} // protect super admin
-                              className="bg-amber-950 border border-amber-800 text-amber-50 text-xs p-2 rounded outline-none focus:border-amber-500 disabled:opacity-50"
+                               value={u.role}
+                               onChange={(e) => handleRoleChange(u._id, e.target.value)}
+                               disabled={u.email === 'rp111monster@gmail.com' && u.role === 'admin'} // protect super admin
+                               className="bg-amber-950 border border-amber-800 text-amber-50 text-xs p-2 rounded outline-none focus:border-amber-500 disabled:opacity-50"
                            >
                               <option value="customer">Customer</option>
                               <option value="chef">Chef</option>
@@ -261,7 +261,7 @@ export default function AdminDashboard() {
              </div>
            )}
 
-            {/* ALL ORDERS TAB */}
+           {/* ALL ORDERS TAB */}
            {activeTab === 'all-orders' && (
              <div className="space-y-4">
                {/* Order Filters */}
@@ -293,94 +293,95 @@ export default function AdminDashboard() {
 
                <div className="bg-amber-950/50 border border-amber-900 rounded-2xl overflow-hidden shadow-xl">
                  <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse whitespace-nowrap">
-                  <thead>
-                    <tr className="bg-amber-900/50 text-amber-400 text-xs uppercase tracking-wider border-b border-amber-800">
-                      <th className="p-4 font-bold">Order #</th>
-                      <th className="p-4 font-bold">Date</th>
-                      <th className="p-4 font-bold">Customer Info</th>
-                      <th className="p-4 font-bold">Items</th>
-                      <th className="p-4 font-bold">Status Action</th>
-                      <th className="p-4 font-bold">Total</th>
-                      <th className="p-4 font-bold">Payment</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-amber-900/50 text-sm">
-                    {orders
-                      .filter(o => paymentFilter === 'all' || o.paymentStatus === paymentFilter)
-                      .slice(0, 50).map(o => ( // Showing latest 50 for performance
-                      <tr key={o._id} className="hover:bg-amber-900/20 transition-colors">
-                        <td className="p-4 font-mono text-amber-400 font-bold">{o.orderNumber || o._id.substring(o._id.length-6)}</td>
-                        <td className="p-4 text-amber-100/70">{new Date(o.createdAt).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</td>
-                        <td className="p-4 max-w-xs whitespace-normal">
-                           <div className="font-medium text-amber-50">{o.customer?.name || 'Unknown'}</div>
-                           <div className="text-xs text-amber-100/40 flex flex-col gap-1 mt-1">
-                              <span className="flex items-center gap-1"><FiMail className="flex-shrink-0" /> <span className="truncate">{o.customer?.email}</span></span>
-                              {o.customer?.phone && <span className="flex items-center gap-1"><FiPhone className="flex-shrink-0" /> {o.customer.phone}</span>}
-                              {o.deliveryAddress && (
-                                <span className="flex items-start gap-1 font-bold text-amber-400 mt-1">
-                                   <FiMapPin className="mt-0.5 flex-shrink-0" /> 
-                                   <span className="leading-tight text-left">
-                                      {o.deliveryAddress.street}, {o.deliveryAddress.city}, {o.deliveryAddress.state} {o.deliveryAddress.pincode}
-                                      {o.deliveryAddress.label && <span className="ml-1 opacity-60">({o.deliveryAddress.label})</span>}
+                   <table className="w-full text-left border-collapse whitespace-nowrap">
+                     <thead>
+                       <tr className="bg-amber-900/50 text-amber-400 text-xs uppercase tracking-wider border-b border-amber-800">
+                         <th className="p-4 font-bold">Order #</th>
+                         <th className="p-4 font-bold">Date</th>
+                         <th className="p-4 font-bold">Customer Info</th>
+                         <th className="p-4 font-bold">Items</th>
+                         <th className="p-4 font-bold">Status Action</th>
+                         <th className="p-4 font-bold">Total</th>
+                         <th className="p-4 font-bold">Payment</th>
+                       </tr>
+                     </thead>
+                     <tbody className="divide-y divide-amber-900/50 text-sm">
+                       {orders
+                         .filter(o => paymentFilter === 'all' || o.paymentStatus === paymentFilter)
+                         .slice(0, 50).map(o => (
+                         <tr key={o._id} className="hover:bg-amber-900/20 transition-colors">
+                           <td className="p-4 font-mono text-amber-400 font-bold">{o.orderNumber || o._id.substring(o._id.length-6)}</td>
+                           <td className="p-4 text-amber-100/70">{new Date(o.createdAt).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</td>
+                           <td className="p-4 max-w-xs whitespace-normal">
+                              <div className="font-medium text-amber-50">{o.customer?.name || 'Unknown'}</div>
+                              <div className="text-xs text-amber-100/40 flex flex-col gap-1 mt-1">
+                                 <span className="flex items-center gap-1"><FiMail className="flex-shrink-0" /> <span className="truncate">{o.customer?.email}</span></span>
+                                 {o.customer?.phone && <span className="flex items-center gap-1"><FiPhone className="flex-shrink-0" /> {o.customer.phone}</span>}
+                                 {o.deliveryAddress && (
+                                   <span className="flex items-start gap-1 font-bold text-amber-400 mt-1">
+                                      <FiMapPin className="mt-0.5 flex-shrink-0" /> 
+                                      <span className="leading-tight text-left">
+                                         {o.deliveryAddress.street}, {o.deliveryAddress.city}, {o.deliveryAddress.state} {o.deliveryAddress.pincode}
+                                         {o.deliveryAddress.label && <span className="ml-1 opacity-60">({o.deliveryAddress.label})</span>}
+                                      </span>
                                    </span>
-                                </span>
-                              )}
-                           </div>
-                        </td>
-                        <td className="p-4">
-                           <div className="max-w-[200px] truncate text-amber-100/60 text-xs">
-                              {o.items?.map(i => `${i.quantity}x ${i.name}`).join(', ')}
-                           </div>
-                        </td>
-                        <td className="p-4">
-                           <select 
-                             value={o.status}
-                             onChange={(e) => handleStatusUpdate(o._id, e.target.value)}
-                             className={`bg-amber-950 border border-amber-800 text-xs p-1.5 rounded outline-none w-32 ${
-                               o.status === 'delivered' ? 'text-green-400 border-green-800/50' : 
-                               o.status === 'cancelled' ? 'text-red-400 border-red-800/50' : 
-                               'text-amber-400 border-amber-800'
-                             }`}
-                           >
-                             <option value="pending">Pending</option>
-                             <option value="confirmed">Confirmed</option>
-                             <option value="preparing">Preparing</option>
-                             <option value="ready">Ready</option>
-                             <option value="out_for_delivery">Out for Delivery</option>
-                             <option value="delivered">Delivered</option>
-                             <option value="cancelled">Cancelled</option>
-                           </select>
-                        </td>
-                        <td className="p-4 font-bold text-amber-50">₹{o.totalAmount?.toFixed(2)}</td>
-                        <td className="p-4">
-                          <select 
-                            value={o.paymentStatus}
-                            onChange={(e) => handlePaymentStatusUpdate(o._id, e.target.value)}
-                            className={`bg-amber-950 border border-amber-800 text-xs p-1.5 rounded outline-none w-28 font-bold ${
-                              o.paymentStatus === 'paid' ? 'text-green-400 border-green-800/50 shadow-[0_0_10px_rgba(34,197,94,0.1)]' : 
-                              o.paymentStatus === 'failed' ? 'text-red-400 border-red-800/50' : 
-                              'text-amber-400 border-amber-800 shadow-[0_0_10px_rgba(245,158,11,0.1)]'
-                            }`}
-                          >
-                            <option value="pending">Pending</option>
-                            <option value="paid">Paid</option>
-                            <option value="failed">Failed</option>
-                          </select>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-               </div>
-               {orders.length === 0 && (
-                 <div className="p-10 text-center text-amber-100/50">No orders found.</div>
-               )}
-               {orders.length > 50 && (
-                 <div className="p-4 text-center border-t border-amber-900/50 text-xs text-amber-100/50 bg-amber-900/10">
-                   Showing latest 50 orders
+                                 )}
+                              </div>
+                           </td>
+                           <td className="p-4">
+                              <div className="max-w-[200px] truncate text-amber-100/60 text-xs">
+                                 {o.items?.map(i => `${i.quantity}x ${i.name}`).join(', ')}
+                              </div>
+                           </td>
+                           <td className="p-4">
+                              <select 
+                                value={o.status}
+                                onChange={(e) => handleStatusUpdate(o._id, e.target.value)}
+                                className={`bg-amber-950 border border-amber-800 text-xs p-1.5 rounded outline-none w-32 ${
+                                  o.status === 'delivered' ? 'text-green-400 border-green-800/50' : 
+                                  o.status === 'cancelled' ? 'text-red-400 border-red-800/50' : 
+                                  'text-amber-400 border-amber-800'
+                                }`}
+                              >
+                                <option value="pending">Pending</option>
+                                <option value="confirmed">Confirmed</option>
+                                <option value="preparing">Preparing</option>
+                                <option value="ready">Ready</option>
+                                <option value="out_for_delivery">Out for Delivery</option>
+                                <option value="delivered">Delivered</option>
+                                <option value="cancelled">Cancelled</option>
+                              </select>
+                           </td>
+                           <td className="p-4 font-bold text-amber-50">₹{o.totalAmount?.toFixed(2)}</td>
+                           <td className="p-4">
+                             <select 
+                               value={o.paymentStatus}
+                               onChange={(e) => handlePaymentStatusUpdate(o._id, e.target.value)}
+                               className={`bg-amber-950 border border-amber-800 text-xs p-1.5 rounded outline-none w-28 font-bold ${
+                                 o.paymentStatus === 'paid' ? 'text-green-400 border-green-800/50 shadow-[0_0_10px_rgba(34,197,94,0.1)]' : 
+                                 o.paymentStatus === 'failed' ? 'text-red-400 border-red-800/50' : 
+                                 'text-amber-400 border-amber-800 shadow-[0_0_10px_rgba(245,158,11,0.1)]'
+                               }`}
+                             >
+                               <option value="pending">Pending</option>
+                               <option value="paid">Paid</option>
+                               <option value="failed">Failed</option>
+                             </select>
+                           </td>
+                         </tr>
+                       ))}
+                     </tbody>
+                   </table>
                  </div>
-               )}
+                 {orders.length === 0 && (
+                   <div className="p-10 text-center text-amber-100/50">No orders found.</div>
+                 )}
+                 {orders.length > 50 && (
+                   <div className="p-4 text-center border-t border-amber-900/50 text-xs text-amber-100/50 bg-amber-900/10">
+                     Showing latest 50 orders
+                   </div>
+                 )}
+               </div>
              </div>
            )}
 
