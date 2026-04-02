@@ -14,11 +14,15 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('overview'); // overview, users, all-orders, requests
   
   // Data States
-  const [stats, setStats] = useState({ totalRevenue: 0, totalOrders: 0, activeUsers: 0, pendingRequests: 0 });
+  const [stats, setStats] = useState({ 
+    totalRevenue: 0, totalOrders: 0, activeUsers: 0, pendingRequests: 0,
+    paymentStats: { pending: 0, paid: 0, failed: 0 }
+  });
   const [users, setUsers] = useState([]);
   const [orders, setOrders] = useState([]);
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [paymentFilter, setPaymentFilter] = useState('all'); // all, pending, paid, failed
 
   useEffect(() => {
     connectSocket();
@@ -72,7 +76,8 @@ export default function AdminDashboard() {
           totalRevenue: statsRes.data.data.stats.totalRevenue,
           totalOrders: statsRes.data.data.stats.totalOrders,
           activeUsers: statsRes.data.data.stats.totalUsers,
-          pendingRequests: statsRes.data.data.stats.pendingRequests || 0
+          pendingRequests: statsRes.data.data.stats.pendingRequests || 0,
+          paymentStats: statsRes.data.data.paymentStats || { pending: 0, paid: 0, failed: 0 }
         });
       }
 
@@ -91,6 +96,16 @@ export default function AdminDashboard() {
       setOrders(orders.map(o => o._id === orderId ? { ...o, status: newStatus } : o));
     } catch (err) {
       toast.error('Failed to update status');
+    }
+  };
+
+  const handlePaymentStatusUpdate = async (orderId, newStatus) => {
+    try {
+      await api.patch(`/orders/${orderId}/payment-status`, { paymentStatus: newStatus });
+      toast.success(`Payment updated to ${newStatus}`);
+      setOrders(orders.map(o => o._id === orderId ? { ...o, paymentStatus: newStatus } : o));
+    } catch (err) {
+      toast.error('Failed to update payment status');
     }
   };
 
@@ -246,10 +261,38 @@ export default function AdminDashboard() {
              </div>
            )}
 
-           {/* ALL ORDERS TAB */}
+            {/* ALL ORDERS TAB */}
            {activeTab === 'all-orders' && (
-             <div className="bg-amber-950/50 border border-amber-900 rounded-2xl overflow-hidden shadow-xl">
-               <div className="overflow-x-auto">
+             <div className="space-y-4">
+               {/* Order Filters */}
+               <div className="flex flex-wrap items-center gap-4 bg-amber-950/50 p-4 rounded-2xl border border-amber-900/50 backdrop-blur-sm">
+                 <span className="text-amber-100/60 text-sm font-bold uppercase tracking-wider">Filter Payment:</span>
+                 <div className="flex gap-2">
+                   {['all', 'pending', 'paid', 'failed'].map((f) => (
+                     <button
+                       key={f}
+                       onClick={() => setPaymentFilter(f)}
+                       className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all border flex items-center gap-2 ${
+                         paymentFilter === f
+                           ? 'bg-amber-500 text-amber-950 border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.3)]'
+                           : 'bg-amber-900/20 text-amber-100/60 border-amber-800 hover:border-amber-500'
+                       }`}
+                     >
+                       {f.toUpperCase()}
+                       {f !== 'all' && (
+                         <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${
+                           paymentFilter === f ? 'bg-amber-950/20 text-amber-950' : 'bg-amber-800 text-amber-400'
+                         }`}>
+                           {stats.paymentStats[f] || 0}
+                         </span>
+                       )}
+                     </button>
+                   ))}
+                 </div>
+               </div>
+
+               <div className="bg-amber-950/50 border border-amber-900 rounded-2xl overflow-hidden shadow-xl">
+                 <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse whitespace-nowrap">
                   <thead>
                     <tr className="bg-amber-900/50 text-amber-400 text-xs uppercase tracking-wider border-b border-amber-800">
@@ -263,7 +306,9 @@ export default function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-amber-900/50 text-sm">
-                    {orders.slice(0, 50).map(o => ( // Showing latest 50 for performance
+                    {orders
+                      .filter(o => paymentFilter === 'all' || o.paymentStatus === paymentFilter)
+                      .slice(0, 50).map(o => ( // Showing latest 50 for performance
                       <tr key={o._id} className="hover:bg-amber-900/20 transition-colors">
                         <td className="p-4 font-mono text-amber-400 font-bold">{o.orderNumber || o._id.substring(o._id.length-6)}</td>
                         <td className="p-4 text-amber-100/70">{new Date(o.createdAt).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</td>
@@ -309,10 +354,19 @@ export default function AdminDashboard() {
                         </td>
                         <td className="p-4 font-bold text-amber-50">₹{o.totalAmount?.toFixed(2)}</td>
                         <td className="p-4">
-                          <span className="flex items-center gap-1">
-                             <div className={`w-2 h-2 rounded-full ${o.paymentStatus === 'paid' ? 'bg-green-500' : 'bg-amber-500'}`}></div>
-                             <span className="text-amber-100/70 uppercase text-xs">{o.paymentStatus}</span>
-                          </span>
+                          <select 
+                            value={o.paymentStatus}
+                            onChange={(e) => handlePaymentStatusUpdate(o._id, e.target.value)}
+                            className={`bg-amber-950 border border-amber-800 text-xs p-1.5 rounded outline-none w-28 font-bold ${
+                              o.paymentStatus === 'paid' ? 'text-green-400 border-green-800/50 shadow-[0_0_10px_rgba(34,197,94,0.1)]' : 
+                              o.paymentStatus === 'failed' ? 'text-red-400 border-red-800/50' : 
+                              'text-amber-400 border-amber-800 shadow-[0_0_10px_rgba(245,158,11,0.1)]'
+                            }`}
+                          >
+                            <option value="pending">Pending</option>
+                            <option value="paid">Paid</option>
+                            <option value="failed">Failed</option>
+                          </select>
                         </td>
                       </tr>
                     ))}

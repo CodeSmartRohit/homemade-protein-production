@@ -29,6 +29,7 @@ exports.getDashboardStats = async (req, res, next) => {
     let pendingOrders = 0;
     let pendingRequests = 0;
     let statusCountsTemp = {};
+    let paymentStats = { pending: 0, paid: 0, failed: 0 };
 
     allRequests.forEach(req => {
         if (req.status === 'pending') pendingRequests++;
@@ -42,6 +43,7 @@ exports.getDashboardStats = async (req, res, next) => {
         if (order.status === 'pending') pendingOrders++;
 
         statusCountsTemp[order.status] = (statusCountsTemp[order.status] || 0) + 1;
+        paymentStats[order.paymentStatus] = (paymentStats[order.paymentStatus] || 0) + 1;
 
         if (order.paymentStatus === 'paid') {
            totalRevenue += order.totalAmount;
@@ -77,6 +79,7 @@ exports.getDashboardStats = async (req, res, next) => {
         },
         recentOrders,
         ordersByStatus: statusCountsTemp,
+        paymentStats: paymentStats,
       },
     });
   } catch (error) {

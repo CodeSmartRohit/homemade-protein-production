@@ -258,7 +258,14 @@ exports.updateProfile = async (req, res, next) => {
     if (name) updates.name = name;
     if (phone) updates.phone = phone;
     if (avatar) updates.avatar = avatar;
-    if (addresses) updates.addresses = addresses;
+    if (addresses) {
+      updates.addresses = addresses.map(addr => {
+        if (!addr._id) {
+          addr._id = uuidv4();
+        }
+        return addr;
+      });
+    }
 
     // Handle avatar upload
     if (req.file) {

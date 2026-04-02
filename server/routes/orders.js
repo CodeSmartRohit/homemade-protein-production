@@ -15,5 +15,6 @@ router.get('/all', authenticate, roleCheck('chef', 'admin'), orderController.get
 // Shared (auth required, access control in controller)
 router.get('/:id', authenticate, orderController.getOrder);
 router.patch('/:id/status', authenticate, roleCheck('chef', 'admin'), orderController.updateOrderStatus);
+router.patch('/:id/payment-status', authenticate, roleCheck('admin'), orderController.updatePaymentStatus);
 
 module.exports = router;

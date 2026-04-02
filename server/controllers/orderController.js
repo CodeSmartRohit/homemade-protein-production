@@ -174,10 +174,11 @@ exports.getOrder = async (req, res, next) => {
  */
 exports.getAllOrders = async (req, res, next) => {
   try {
-    const { page = 1, limit = 20, status, date, sortBy = 'createdAt', order: sortOrder = 'desc' } = req.query;
+    const { page = 1, limit = 20, status, paymentStatus, date, sortBy = 'createdAt', order: sortOrder = 'desc' } = req.query;
     const query = {};
 
     if (status) query.status = status;
+    if (paymentStatus) query.paymentStatus = paymentStatus;
     
     // Convert to manual filter logic format for dates
     if (date) {
@@ -333,6 +334,57 @@ exports.cancelOrder = async (req, res, next) => {
     res.json({
       success: true,
       message: 'Order cancelled.',
+      data: { order },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * PATCH /api/orders/:id/payment-status — Update payment status (Admin)
+ */
+exports.updatePaymentStatus = async (req, res, next) => {
+  try {
+    const { paymentStatus } = req.body;
+    const validStatuses = ['pending', 'paid', 'failed'];
+
+    if (!validStatuses.includes(paymentStatus)) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid payment status. Must be one of: ${validStatuses.join(', ')}`,
+      });
+    }
+
+    const order = await Order.findByIdAndUpdate(
+      req.params.id,
+      { paymentStatus },
+      { new: true }
+    ).populate('customer', 'name email phone');
+
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Order not found.' });
+    }
+
+    // Emit socket event for payment update
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`order-${order._id}`).emit('payment-status-update', {
+        orderId: order._id,
+        paymentStatus: order.paymentStatus,
+      });
+      
+      if (paymentStatus === 'paid') {
+        io.emit('payment-received', {
+          orderId: order._id,
+          orderNumber: order.orderNumber,
+        });
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `Payment status updated to ${paymentStatus}.`,
       data: { order },
     });
   } catch (error) {
