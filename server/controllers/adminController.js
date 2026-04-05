@@ -93,7 +93,7 @@ exports.getDashboardStats = async (req, res, next) => {
 exports.getUsers = async (req, res, next) => {
   try {
     const { page = 1, limit = 20, role, search } = req.query;
-    let query = {};
+    let query = { isDeleted: false };
     if (role) query.role = role;
 
     let users = await User.find(query);
@@ -189,6 +189,83 @@ exports.updateUserStatus = async (req, res, next) => {
       success: true,
       message: `User ${isActive ? 'activated' : 'deactivated'}.`,
       data: { user },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * DELETE /api/admin/users/:id — Soft delete user (Recycle Bin)
+ */
+exports.softDeleteUser = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    if (id === req.user._id) {
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot delete your own account.',
+      });
+    }
+
+    const user = await User.findByIdAndUpdate(id, {
+      isActive: false,
+      isDeleted: true,
+      deletedAt: new Date()
+    });
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found.' });
+    }
+
+    res.json({
+      success: true,
+      message: 'User moved to Recycle Bin. Data will be permanently deleted after 10 days.',
+      data: { user }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * POST /api/admin/users/:id/restore — Restore user from Recycle Bin
+ */
+exports.restoreUser = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const user = await User.findByIdAndUpdate(id, {
+      isActive: true,
+      isDeleted: false,
+      deletedAt: null
+    });
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found.' });
+    }
+
+    res.json({
+      success: true,
+      message: 'User restored successfully.',
+      data: { user }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * GET /api/admin/users/deleted — List users in Recycle Bin
+ */
+exports.getDeletedUsers = async (req, res, next) => {
+  try {
+    const users = await User.find({ isDeleted: true }).sort({ deletedAt: -1 });
+    
+    res.json({
+      success: true,
+      data: { users }
     });
   } catch (error) {
     next(error);

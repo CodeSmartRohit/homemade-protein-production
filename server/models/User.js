@@ -21,6 +21,8 @@ const userSchema = new mongoose.Schema({
   refreshToken: { type: String },
   isVerified: { type: Boolean, default: false },
   isActive: { type: Boolean, default: true },
+  isDeleted: { type: Boolean, default: false },
+  deletedAt: { type: Date, default: null },
 }, { timestamps: true });
 userSchema.index({ role: 1 });
 userSchema.index({ isActive: 1 });

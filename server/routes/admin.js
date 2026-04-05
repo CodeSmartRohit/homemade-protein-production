@@ -9,8 +9,11 @@ router.use(authenticate, roleCheck('admin'));
 
 router.get('/dashboard', adminController.getDashboardStats);
 router.get('/users', adminController.getUsers);
+router.get('/users/deleted', adminController.getDeletedUsers);
 router.patch('/users/:id/role', adminController.updateUserRole);
 router.patch('/users/:id/status', adminController.updateUserStatus);
+router.post('/users/:id/restore', adminController.restoreUser);
+router.delete('/users/:id', adminController.softDeleteUser);
 router.get('/analytics', adminController.getAnalytics);
 
 module.exports = router;

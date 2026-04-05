@@ -19,6 +19,7 @@ export default function AdminDashboard() {
     paymentStats: { pending: 0, paid: 0, failed: 0 }
   });
   const [users, setUsers] = useState([]);
+  const [deletedUsers, setDeletedUsers] = useState([]);
   const [orders, setOrders] = useState([]);
   const [requests, setRequests] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -71,15 +72,17 @@ export default function AdminDashboard() {
   const fetchAdminData = async () => {
     setLoading(true);
     try {
-      const [statsRes, usersRes, ordersRes, requestsRes, catsRes, menuRes] = await Promise.all([
+      const [statsRes, usersRes, deletedUsersRes, ordersRes, requestsRes, catsRes, menuRes] = await Promise.all([
         api.get('/admin/dashboard'),
         api.get('/admin/users'), 
+        api.get('/admin/users/deleted'),
         api.get('/orders/all'),
         api.get('/requests/all'),
         api.get('/categories'),
         api.get('/menu/admin/all')
       ]);
       setUsers(usersRes.data?.data?.users || []);
+      setDeletedUsers(deletedUsersRes.data?.data?.users || []);
       setOrders(ordersRes.data?.data?.orders || []);
       setRequests(requestsRes.data?.data?.requests || []);
       setCategories(catsRes.data?.data?.categories || []);
@@ -129,7 +132,6 @@ export default function AdminDashboard() {
       toast.success(`Request marked as ${newStatus}`);
       setRequests(requests.map(r => r._id === requestId ? { ...r, status: newStatus } : r));
     } catch (err) {
-      toast.error('Failed to update request');
     }
   };
 
@@ -141,6 +143,44 @@ export default function AdminDashboard() {
     } catch (err) {
        toast.error('Failed to update role');
     }
+  };
+
+  const handleSoftDeleteUser = async (userId) => {
+    if (!window.confirm('Move this user to Recycle Bin? They will be permanently deleted after 10 days.')) return;
+    try {
+      await api.delete(`/admin/users/${userId}`);
+      toast.success('User moved to Recycle Bin');
+      const deletedUser = users.find(u => u._id === userId);
+      setUsers(users.filter(u => u._id !== userId));
+      if (deletedUser) {
+        setDeletedUsers([ { ...deletedUser, isDeleted: true, deletedAt: new Date() }, ...deletedUsers ]);
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to delete user');
+    }
+  };
+
+  const handleRestoreUser = async (userId) => {
+    try {
+      await api.post(`/admin/users/${userId}/restore`);
+      toast.success('User restored successfully');
+      const restoredUser = deletedUsers.find(u => u._id === userId);
+      setDeletedUsers(deletedUsers.filter(u => u._id !== userId));
+      if (restoredUser) {
+        setUsers([ { ...restoredUser, isDeleted: false, isActive: true }, ...users ]);
+      }
+    } catch (err) {
+      toast.error('Failed to restore user');
+    }
+  };
+
+  const calculateDaysRemaining = (deletedAt) => {
+    const dDate = new Date(deletedAt);
+    const now = new Date();
+    const diffTime = dDate.getTime() + (10 * 24 * 60 * 60 * 1000) - now.getTime();
+    const diffDays = Math.ceil(diffTime / (10 * 24 * 60 * 60 * 10)); // Simplified
+    const actualDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return actualDays > 0 ? actualDays : 0;
   };
 
   const handleCreateCategory = async (e) => {
@@ -247,7 +287,7 @@ export default function AdminDashboard() {
 
         {/* Tabs */}
         <div className="flex space-x-2 border-b border-amber-900/50 mb-8 overflow-x-auto scrollbar-hide">
-          {['overview', 'menu-management', 'users', 'all-orders', 'requests'].map((tab) => (
+          {['overview', 'menu-management', 'users', 'recycle-bin', 'all-orders', 'requests'].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -258,8 +298,13 @@ export default function AdminDashboard() {
               }`}
             >
               {tab.replace('-', ' ')}
+              {tab === 'recycle-bin' && deletedUsers.length > 0 && (
+                <span className="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full ring-2 ring-amber-950 font-bold">
+                  {deletedUsers.length}
+                </span>
+              )}
               {tab === 'requests' && stats.pendingRequests > 0 && (
-                <span className="bg-amber-500 text-amber-950 text-[10px] px-1.5 py-0.5 rounded-full ring-2 ring-amber-950">
+                <span className="bg-amber-500 text-amber-950 text-[10px] px-1.5 py-0.5 rounded-full ring-2 ring-amber-950 font-bold">
                   {stats.pendingRequests}
                 </span>
               )}
@@ -340,22 +385,93 @@ export default function AdminDashboard() {
                         </td>
                         <td className="p-4 text-amber-100/50 text-sm">{new Date(u.createdAt).toLocaleDateString()}</td>
                         <td className="p-4">
-                           <select
-                               value={u.role}
-                               onChange={(e) => handleRoleChange(u._id, e.target.value)}
-                               disabled={u.email === 'rp111monster@gmail.com' && u.role === 'admin'} // protect super admin
-                               className="bg-amber-950 border border-amber-800 text-amber-50 text-xs p-2 rounded outline-none focus:border-amber-500 disabled:opacity-50"
-                           >
-                              <option value="customer">Customer</option>
-                              <option value="chef">Chef</option>
-                              <option value="admin">Admin</option>
-                           </select>
+                           <div className="flex items-center gap-2">
+                             <select
+                                 value={u.role}
+                                 onChange={(e) => handleRoleChange(u._id, e.target.value)}
+                                 disabled={u.email === 'rp111monster@gmail.com' && u.role === 'admin'} // protect super admin
+                                 className="bg-amber-950 border border-amber-800 text-amber-50 text-xs p-2 rounded outline-none focus:border-amber-500 disabled:opacity-50"
+                             >
+                                <option value="customer">Customer</option>
+                                <option value="chef">Chef</option>
+                                <option value="admin">Admin</option>
+                             </select>
+                             <button
+                               onClick={() => handleSoftDeleteUser(u._id)}
+                               disabled={u.email === 'rp111monster@gmail.com' || u._id === user._id}
+                               className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-20"
+                               title="Move to Recycle Bin"
+                             >
+                               <FiTrash2 />
+                             </button>
+                           </div>
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
                </div>
+             </div>
+           )}
+
+           {/* RECYCLE BIN TAB */}
+           {activeTab === 'recycle-bin' && (
+             <div className="space-y-6">
+                <div className="bg-red-900/20 border border-red-900/30 rounded-2xl p-4 flex items-center gap-4 text-red-200">
+                   <div className="w-10 h-10 rounded-full bg-red-900/30 flex items-center justify-center text-red-400 border border-red-800"><FiClock /></div>
+                   <div className="text-sm">
+                      <p className="font-bold">Automated Cleanup Policy</p>
+                      <p className="opacity-70">Users in the Recycle Bin are permanently deleted after 10 days of inactivity.</p>
+                   </div>
+                </div>
+
+                <div className="bg-amber-950/50 border border-amber-900 rounded-2xl overflow-hidden shadow-xl">
+                  <div className="overflow-x-auto">
+                   <table className="w-full text-left border-collapse">
+                     <thead>
+                       <tr className="bg-amber-900/50 text-amber-400 text-xs uppercase tracking-wider border-b border-amber-800">
+                         <th className="p-4 font-bold">Deleted User</th>
+                         <th className="p-4 font-bold">Reason/Status</th>
+                         <th className="p-4 font-bold text-center">Days left</th>
+                         <th className="p-4 font-bold">Actions</th>
+                       </tr>
+                     </thead>
+                     <tbody className="divide-y divide-amber-900/50">
+                       {deletedUsers.length > 0 ? deletedUsers.map(u => (
+                         <tr key={u._id} className="hover:bg-amber-900/20 transition-colors">
+                           <td className="p-4">
+                              <div className="font-bold text-amber-50">{u.name}</div>
+                              <div className="text-[10px] text-amber-100/40">{u.email}</div>
+                           </td>
+                           <td className="p-4">
+                             <span className="text-[10px] px-2 py-1 rounded bg-red-900/30 text-red-400 border border-red-800 font-bold uppercase tracking-widest">
+                               Deleted
+                             </span>
+                             <div className="text-[10px] text-amber-100/30 mt-1 uppercase tracking-tighter">On: {new Date(u.deletedAt).toLocaleDateString()}</div>
+                           </td>
+                           <td className="p-4 text-center">
+                              <span className={`font-mono font-bold ${calculateDaysRemaining(u.deletedAt) <= 2 ? 'text-red-500' : 'text-amber-500'}`}>
+                                 {calculateDaysRemaining(u.deletedAt)}
+                              </span>
+                           </td>
+                           <td className="p-4">
+                              <button
+                                onClick={() => handleRestoreUser(u._id)}
+                                className="px-4 py-2 bg-amber-500 text-amber-950 text-xs font-bold rounded-lg hover:bg-amber-400 transition-all flex items-center gap-2"
+                              >
+                                <FiCheckCircle size={14} /> Restore User
+                              </button>
+                           </td>
+                         </tr>
+                       )) : (
+                         <tr>
+                            <td colSpan="4" className="p-20 text-center text-amber-100/40 italic">Recycle Bin is empty.</td>
+                         </tr>
+                       )}
+                     </tbody>
+                   </table>
+                  </div>
+                </div>
              </div>
            )}
            {/* MENU MANAGEMENT TAB */}

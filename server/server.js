@@ -183,6 +183,34 @@ server.listen(PORT, () => {
       await seedDatabase();
       
       console.log('✅ Background initialization complete');
+
+      // ===== RECYCLE BIN CLEANUP JOB =====
+      // Runs every 6 hours to permanently delete users in the recycle bin for > 10 days
+      const User = require('./models/User');
+      const CLEANUP_INTERVAL = 6 * 60 * 60 * 1000; // 6 hours
+      const TEN_DAYS_MS = 10 * 24 * 60 * 60 * 1000;
+
+      setInterval(async () => {
+        try {
+          const cutOffDate = new Date(Date.now() - TEN_DAYS_MS);
+          const result = await User.deleteMany({
+            isDeleted: true,
+            deletedAt: { $lte: cutOffDate }
+          });
+          if (result.deletedCount > 0) {
+            console.log(`🧹 Recycle Bin: Permanently deleted ${result.deletedCount} users.`);
+          }
+        } catch (err) {
+          console.error('❌ Recycle Bin Cleanup Error:', err.message);
+        }
+      }, CLEANUP_INTERVAL);
+      
+      // Run once on startup too
+      const initialCutOffDate = new Date(Date.now() - TEN_DAYS_MS);
+      User.deleteMany({ isDeleted: true, deletedAt: { $lte: initialCutOffDate } })
+        .then(res => { if (res.deletedCount > 0) console.log(`🧹 Startup Cleanup: Permanently deleted ${res.deletedCount} users.`); })
+        .catch(err => console.error('❌ Startup Cleanup Error:', err.message));
+
     } catch (error) {
       console.error('⚠️ Background initialization failed:', error.message);
     }

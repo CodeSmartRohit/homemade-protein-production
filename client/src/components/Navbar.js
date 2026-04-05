@@ -41,14 +41,22 @@ export default function Navbar() {
         }`}
       >
         <div className="container mx-auto px-6 md:px-12 flex justify-between items-center">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 group">
-            <span className="font-playfair text-2xl md:text-3xl font-bold tracking-wider text-amber-50 group-hover:text-amber-400 transition-colors">
-              HOMEMADE
-            </span>
-            <span className="text-xs tracking-widest uppercase text-amber-500 font-semibold mt-1">
-              Protein
-            </span>
+          <Link href="/" className="flex items-center gap-3 group">
+            <div className="relative w-8 h-8 md:w-10 md:h-10 rounded-xl overflow-hidden shadow-lg shadow-amber-500/20 border border-amber-500/30 group-hover:scale-110 transition-transform duration-300">
+               <img 
+                 src="/logo.png" 
+                 alt="HOMEMADE Protein Logo" 
+                 className="w-full h-full object-cover"
+               />
+            </div>
+            <div className="flex flex-col -space-y-1">
+              <span className="font-playfair text-xl md:text-2xl font-bold tracking-wider text-amber-50 group-hover:text-amber-400 transition-colors">
+                HOMEMADE
+              </span>
+              <span className="text-[10px] tracking-widest uppercase text-amber-500 font-semibold">
+                Protein
+              </span>
+            </div>
           </Link>
 
           {/* Desktop Nav */}
