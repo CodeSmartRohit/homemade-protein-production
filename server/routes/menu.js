@@ -14,7 +14,7 @@ router.get('/:id', menuController.getItem);
 router.post(
   '/',
   authenticate,
-  roleCheck('chef', 'admin'),
+  roleCheck('admin'),
   setUploadDir('menu'),
   upload.fields([
     { name: 'image', maxCount: 1 },
@@ -26,7 +26,7 @@ router.post(
 router.put(
   '/:id',
   authenticate,
-  roleCheck('chef', 'admin'),
+  roleCheck('admin'),
   setUploadDir('menu'),
   upload.fields([
     { name: 'image', maxCount: 1 },
@@ -35,10 +35,11 @@ router.put(
   menuController.updateItem
 );
 
-router.delete('/:id', authenticate, roleCheck('chef', 'admin'), menuController.deleteItem);
-router.patch('/:id/availability', authenticate, roleCheck('chef', 'admin'), menuController.toggleAvailability);
+router.delete('/:id', authenticate, roleCheck('admin'), menuController.deleteItem);
+router.delete('/:id/image', authenticate, roleCheck('admin'), menuController.removeImage);
+router.patch('/:id/availability', authenticate, roleCheck('admin'), menuController.toggleAvailability);
 
 // Admin endpoint to see all items (including unavailable)
-router.get('/admin/all', authenticate, roleCheck('chef', 'admin'), menuController.getAllItemsAdmin);
+router.get('/admin/all', authenticate, roleCheck('admin'), menuController.getAllItemsAdmin);
 
 module.exports = router;

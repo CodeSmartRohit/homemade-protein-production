@@ -1,5 +1,7 @@
 const MenuItem = require('../models/MenuItem');
 const Category = require('../models/Category');
+const path = require('path');
+const fs = require('fs');
 
 /**
  * GET /api/menu — Browse all menu items (public)
@@ -167,7 +169,11 @@ exports.updateItem = async (req, res, next) => {
       updates.tags = updates.tags.split(',').map(t => t.trim());
     }
     if (typeof updates.nutritionInfo === 'string') {
-      updates.nutritionInfo = JSON.parse(updates.nutritionInfo);
+      try {
+        updates.nutritionInfo = JSON.parse(updates.nutritionInfo);
+      } catch (e) {
+        // Fallback if it's already an object or malformed
+      }
     }
     if (updates.price) updates.price = Number(updates.price);
     if (updates.discountPrice) updates.discountPrice = Number(updates.discountPrice);
@@ -176,9 +182,34 @@ exports.updateItem = async (req, res, next) => {
 
     // Handle new image upload
     if (req.files && req.files.image && req.files.image[0]) {
+      // Optional: Delete old image from filesystem if it exists
+      if (item.image && item.image.startsWith('/uploads/')) {
+        const oldImagePath = path.join(__dirname, '..', item.image);
+        try {
+          if (fs.existsSync(oldImagePath)) fs.unlinkSync(oldImagePath);
+        } catch (err) {
+          console.error(`Failed to delete old image: ${oldImagePath}`, err);
+        }
+      }
       updates.image = `/uploads/menu/${req.files.image[0].filename}`;
     } else if (req.file) {
+      if (item.image && item.image.startsWith('/uploads/')) {
+        const oldImagePath = path.join(__dirname, '..', item.image);
+        try {
+          if (fs.existsSync(oldImagePath)) fs.unlinkSync(oldImagePath);
+        } catch (err) {
+          console.error(`Failed to delete old image: ${oldImagePath}`, err);
+        }
+      }
       updates.image = `/uploads/menu/${req.file.filename}`;
+    }
+
+    // Handle multiple images if provided
+    if (req.files && req.files.images) {
+      const newImages = req.files.images.map(f => `/uploads/menu/${f.filename}`);
+      // Merge or replace? Let's replace for now if they send new ones, 
+      // or we can add a specific "delete image" endpoint later.
+      updates.images = [...(item.images || []), ...newImages];
     }
 
     const updatedItem = await MenuItem.findByIdAndUpdate(req.params.id, updates, {
@@ -197,6 +228,46 @@ exports.updateItem = async (req, res, next) => {
 };
 
 /**
+ * DELETE /api/menu/:id/image — Remove secondary image (Chef/Admin)
+ */
+exports.removeImage = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { imageUrl } = req.body;
+
+    const item = await MenuItem.findById(id);
+    if (!item) {
+      return res.status(404).json({ success: false, message: 'Menu item not found.' });
+    }
+
+    // Remove from filesystem
+    const imagePath = path.join(__dirname, '..', imageUrl);
+    try {
+      if (fs.existsSync(imagePath)) fs.unlinkSync(imagePath);
+    } catch (err) {
+      console.error(`Failed to delete image: ${imagePath}`, err);
+    }
+
+    // Update DB
+    if (item.image === imageUrl) {
+      item.image = '';
+    } else {
+      item.images = item.images.filter(img => img !== imageUrl);
+    }
+
+    await item.save();
+
+    res.json({
+      success: true,
+      message: 'Image removed successfully',
+      data: { item }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
  * DELETE /api/menu/:id — Delete menu item (Chef/Admin)
  */
 exports.deleteItem = async (req, res, next) => {
@@ -204,6 +275,28 @@ exports.deleteItem = async (req, res, next) => {
     const item = await MenuItem.findByIdAndDelete(req.params.id);
     if (!item) {
       return res.status(404).json({ success: false, message: 'Menu item not found.' });
+    }
+
+    // Cleanup images
+    if (item.image && item.image.startsWith('/uploads/')) {
+      const imgPath = path.join(__dirname, '..', item.image);
+      try {
+        if (fs.existsSync(imgPath)) fs.unlinkSync(imgPath);
+      } catch (err) {
+        console.error(`Failed to delete image: ${imgPath}`, err);
+      }
+    }
+    if (item.images && item.images.length > 0) {
+      item.images.forEach(img => {
+        if (img.startsWith('/uploads/')) {
+          const imgPath = path.join(__dirname, '..', img);
+          try {
+            if (fs.existsSync(imgPath)) fs.unlinkSync(imgPath);
+          } catch (err) {
+            console.error(`Failed to delete secondary image: ${imgPath}`, err);
+          }
+        }
+      });
     }
 
     res.json({

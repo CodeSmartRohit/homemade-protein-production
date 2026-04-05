@@ -1,9 +1,11 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import ProductCard3D from '@/components/ProductCard3D';
-import { FiFilter, FiSearch, FiX, FiCoffee, FiCloud, FiWind, FiCircle, FiDisc, FiLayers, FiSun, FiDroplet } from 'react-icons/fi';
+import { FiFilter, FiSearch, FiX, FiCoffee, FiCloud, FiWind, FiCircle, FiDisc, FiLayers, FiSun, FiDroplet, FiEdit, FiCheckCircle, FiActivity } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '@/lib/api';
+import { useAuth } from '@/context/AuthContext';
+import toast from 'react-hot-toast';
 
 const categoryIcons = {
   shakes: <FiCoffee />,

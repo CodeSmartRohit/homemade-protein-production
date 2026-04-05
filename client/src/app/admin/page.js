@@ -4,14 +4,14 @@ import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
-import { FiUsers, FiShoppingBag, FiDollarSign, FiActivity, FiTrendingUp, FiMessageSquare, FiPhone, FiMail, FiCheckCircle, FiClock, FiMapPin } from 'react-icons/fi';
+import { FiUsers, FiShoppingBag, FiDollarSign, FiActivity, FiTrendingUp, FiMessageSquare, FiPhone, FiMail, FiCheckCircle, FiClock, FiMapPin, FiTrash2, FiPlus, FiEdit } from 'react-icons/fi';
 import { socket, connectSocket } from '@/lib/socket';
 
 export default function AdminDashboard() {
   const { user, isAdmin, isAuthenticated, loading: authLoading } = useAuth();
   const router = useRouter();
 
-  const [activeTab, setActiveTab] = useState('overview'); // overview, users, all-orders, requests
+  const [activeTab, setActiveTab] = useState('overview'); // overview, menu-management, users, all-orders, requests
   
   // Data States
   const [stats, setStats] = useState({ 
@@ -21,8 +21,18 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState([]);
   const [orders, setOrders] = useState([]);
   const [requests, setRequests] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [paymentFilter, setPaymentFilter] = useState('all'); // all, pending, paid, failed
+
+  // Form states for Menu Management
+  const [newCat, setNewCat] = useState({ name: '', description: '' });
+  const [newItem, setNewItem] = useState({
+    name: '', description: '', price: '', category: '', isVeg: 'true', type: '', image: null
+  });
+  const [menuItems, setMenuItems] = useState([]);
+  const [editingPriceId, setEditingPriceId] = useState(null);
+  const [editingPriceValue, setEditingPriceValue] = useState('');
 
   useEffect(() => {
     connectSocket();
@@ -61,17 +71,21 @@ export default function AdminDashboard() {
   const fetchAdminData = async () => {
     setLoading(true);
     try {
-      const [statsRes, usersRes, ordersRes, requestsRes] = await Promise.all([
+      const [statsRes, usersRes, ordersRes, requestsRes, catsRes, menuRes] = await Promise.all([
         api.get('/admin/dashboard'),
         api.get('/admin/users'), 
         api.get('/orders/all'),
-        api.get('/requests/all')
+        api.get('/requests/all'),
+        api.get('/categories'),
+        api.get('/menu/admin/all')
       ]);
-      setUsers(usersRes.data.data.users || []);
-      setOrders(ordersRes.data.data.orders || []);
-      setRequests(requestsRes.data.data.requests || []);
+      setUsers(usersRes.data?.data?.users || []);
+      setOrders(ordersRes.data?.data?.orders || []);
+      setRequests(requestsRes.data?.data?.requests || []);
+      setCategories(catsRes.data?.data?.categories || []);
+      setMenuItems(menuRes.data?.data?.items || []);
       
-      if (statsRes.data.data.stats) {
+      if (statsRes.data?.data?.stats) {
         setStats({
           totalRevenue: statsRes.data.data.stats.totalRevenue,
           totalOrders: statsRes.data.data.stats.totalOrders,
@@ -129,6 +143,90 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleCreateCategory = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await api.post('/categories', newCat);
+      toast.success('Category created');
+      setCategories([...categories, res.data.data.category]);
+      setNewCat({ name: '', description: '' });
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to create category');
+    }
+  };
+
+  const handleCreateItem = async (e) => {
+    e.preventDefault();
+    try {
+      const payload = new FormData();
+      Object.keys(newItem).forEach(key => {
+        if (newItem[key] !== null && newItem[key] !== undefined && newItem[key] !== '') {
+          payload.append(key, newItem[key]);
+        }
+      });
+      const res = await api.post('/menu', payload);
+      toast.success('Menu item added');
+      setMenuItems([res.data.data.item, ...menuItems]);
+      setNewItem({ name: '', description: '', price: '', category: '', isVeg: 'true', type: '', image: null });
+       // reset file input
+       const fileInput = document.getElementById('product-image');
+       if (fileInput) fileInput.value = '';
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to add menu item');
+    }
+  };
+
+  const handleToggleAvailability = async (id) => {
+    try {
+      const res = await api.patch(`/menu/${id}/availability`);
+      toast.success('Availability updated');
+      setMenuItems(menuItems.map(item => item._id === id ? { ...item, isAvailable: res.data.data.isAvailable } : item));
+    } catch (err) {
+      toast.error('Failed to update availability');
+    }
+  };
+
+  const handleDeleteProduct = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this product?')) return;
+    try {
+      await api.delete(`/menu/${id}`);
+      toast.success('Product deleted');
+      setMenuItems(menuItems.filter(item => item._id !== id));
+    } catch (err) {
+      toast.error('Failed to delete product');
+    }
+  };
+
+  const handleDeleteImage = async (id, imageUrl) => {
+    if (!window.confirm('Are you sure you want to remove this image?')) return;
+    try {
+      const res = await api.delete(`/menu/${id}/image`, { data: { imageUrl } });
+      toast.success('Image removed');
+      setMenuItems(menuItems.map(item => item._id === id ? res.data.data.item : item));
+    } catch (err) {
+      toast.error('Failed to remove image');
+    }
+  };
+
+  const handleUpdatePrice = async (id) => {
+    if (!editingPriceValue || isNaN(editingPriceValue)) {
+      toast.error('Please enter a valid price');
+      return;
+    }
+    try {
+      const payload = new FormData();
+      payload.append('price', editingPriceValue);
+      
+      const res = await api.put(`/menu/${id}`, payload);
+      toast.success('Price updated successfully');
+      setMenuItems(menuItems.map(item => item._id === id ? { ...item, price: Number(editingPriceValue) } : item));
+      setEditingPriceId(null);
+      setEditingPriceValue('');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to update price');
+    }
+  };
+
   if (authLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -149,7 +247,7 @@ export default function AdminDashboard() {
 
         {/* Tabs */}
         <div className="flex space-x-2 border-b border-amber-900/50 mb-8 overflow-x-auto scrollbar-hide">
-          {['overview', 'users', 'all-orders', 'requests'].map((tab) => (
+          {['overview', 'menu-management', 'users', 'all-orders', 'requests'].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -260,7 +358,212 @@ export default function AdminDashboard() {
                </div>
              </div>
            )}
+           {/* MENU MANAGEMENT TAB */}
+           {activeTab === 'menu-management' && (
+             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+               {/* Left Column: Create Form */}
+               <div className="md:col-span-1 space-y-6">
+                 <div className="bg-amber-950/50 border border-amber-900 rounded-2xl p-6 shadow-xl">
+                   <h3 className="font-playfair text-xl font-bold text-amber-50 mb-4 border-b border-amber-900/50 pb-2">Add New Product</h3>
+                   <form onSubmit={handleCreateItem} className="space-y-4">
+                     <div>
+                       <label className="block text-xs text-amber-100/70 mb-1 uppercase tracking-wider font-bold">Product Name</label>
+                       <input 
+                         type="text" 
+                         required 
+                         value={newItem.name} 
+                         onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
+                         className="w-full bg-black/40 border border-amber-800 rounded-lg p-3 text-amber-50 outline-none focus:border-amber-500 transition-all placeholder:text-amber-100/20"
+                         placeholder="Gold Whey Protein"
+                       />
+                     </div>
+                     <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs text-amber-100/70 mb-1 uppercase tracking-wider font-bold">Price (₹)</label>
+                          <input 
+                            type="number" 
+                            required 
+                            value={newItem.price} 
+                            onChange={(e) => setNewItem({ ...newItem, price: e.target.value })}
+                            className="w-full bg-black/40 border border-amber-800 rounded-lg p-3 text-amber-50 outline-none focus:border-amber-500"
+                            placeholder="2499"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-amber-100/70 mb-1 uppercase tracking-wider font-bold">Category</label>
+                          <select 
+                            required 
+                            value={newItem.category} 
+                            onChange={(e) => setNewItem({ ...newItem, category: e.target.value })}
+                            className="w-full bg-black/40 border border-amber-800 rounded-lg p-3 text-amber-50 outline-none focus:border-amber-500"
+                          >
+                            <option value="">Select Category</option>
+                            {categories.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
+                          </select>
+                        </div>
+                     </div>
+                     <div>
+                       <label className="block text-xs text-amber-100/70 mb-1 uppercase tracking-wider font-bold">Main Image</label>
+                       <div className="relative group">
+                          <input 
+                            type="file" 
+                            id="product-image"
+                            className="hidden"
+                            accept="image/*"
+                            onChange={(e) => setNewItem({ ...newItem, image: e.target.files[0] })}
+                          />
+                          <label 
+                            htmlFor="product-image"
+                            className="flex flex-col items-center justify-center w-full h-32 bg-black/20 border-2 border-dashed border-amber-900 rounded-xl cursor-pointer hover:bg-amber-900/10 hover:border-amber-500 transition-all group-hover:border-amber-500"
+                          >
+                            {newItem.image ? (
+                              <div className="flex flex-col items-center">
+                                <FiCheckCircle className="text-green-500 text-2xl mb-2" />
+                                <span className="text-amber-50 text-xs font-medium truncate max-w-[150px]">{newItem.image.name}</span>
+                              </div>
+                            ) : (
+                              <div className="flex flex-col items-center">
+                                <FiPlus className="text-amber-500 text-2xl mb-2" />
+                                <span className="text-amber-100/60 text-xs text-center px-4 uppercase tracking-tighter">Click to upload product image</span>
+                              </div>
+                            )}
+                          </label>
+                       </div>
+                     </div>
+                     <div>
+                       <label className="block text-xs text-amber-100/70 mb-1 uppercase tracking-wider font-bold">Description</label>
+                       <textarea 
+                         rows="3" 
+                         value={newItem.description} 
+                         onChange={(e) => setNewItem({ ...newItem, description: e.target.value })}
+                         className="w-full bg-black/40 border border-amber-800 rounded-lg p-3 text-amber-50 outline-none focus:border-amber-500"
+                       />
+                     </div>
+                     <button type="submit" className="w-full bg-amber-500 text-amber-950 font-bold py-3 rounded-lg hover:bg-amber-400 transition-all shadow-[0_0_20px_rgba(245,158,11,0.2)]">
+                       Create Product
+                     </button>
+                   </form>
+                 </div>
 
+                 <div className="bg-amber-950/50 border border-amber-900 rounded-2xl p-6 shadow-xl">
+                   <h3 className="font-playfair text-xl font-bold text-amber-50 mb-4 border-b border-amber-900/50 pb-2">Add New Category</h3>
+                   <form onSubmit={handleCreateCategory} className="space-y-4">
+                     <input 
+                       type="text" 
+                       required 
+                       placeholder="Category Name" 
+                       value={newCat.name}
+                       onChange={(e) => setNewCat({ ...newCat, name: e.target.value })}
+                       className="w-full bg-black/40 border border-amber-800 rounded-lg p-3 text-amber-50 outline-none focus:border-amber-500"
+                     />
+                     <button type="submit" className="w-full bg-amber-900/40 text-amber-400 font-bold py-3 rounded-lg border border-amber-800 hover:bg-amber-800 transition-all">
+                       Create Category
+                     </button>
+                   </form>
+                 </div>
+               </div>
+
+               {/* Right Column: List & Management */}
+               <div className="md:col-span-2">
+                 <div className="bg-amber-950/50 border border-amber-900 rounded-2xl overflow-hidden shadow-xl">
+                    <div className="p-4 border-b border-amber-900/50 bg-amber-900/20 flex justify-between items-center">
+                       <h3 className="font-bold text-amber-100 uppercase tracking-widest text-xs">Existing Products</h3>
+                       <div className="text-[10px] text-amber-100/40 uppercase tracking-wider">Total: {menuItems?.length || 0} Products</div>
+                    </div>
+                    <div className="max-h-[800px] overflow-y-auto">
+                      <table className="w-full text-left border-collapse">
+                        <thead className="sticky top-0 bg-amber-950 z-10">
+                          <tr className="bg-amber-900/50 text-amber-400 text-[10px] uppercase tracking-widest border-b border-amber-800">
+                            <th className="p-4">Image</th>
+                            <th className="p-4">Info</th>
+                            <th className="p-4 text-center">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-amber-900/50">
+                          {(menuItems && menuItems.length > 0) ? menuItems.map(item => (
+                            <tr key={item._id} className="hover:bg-amber-900/10 transition-colors">
+                              <td className="p-4 w-20">
+                                {item.image ? (
+                                  <div className="relative group w-16 h-16 rounded-lg overflow-hidden border border-amber-900/50 bg-black/20">
+                                     <img src={item.image.startsWith('http') ? item.image : `${process.env.NEXT_PUBLIC_API_URL}${item.image}`} alt={item.name} className="w-full h-full object-cover" />
+                                     <button 
+                                       onClick={() => handleDeleteImage(item._id, item.image)}
+                                       className="absolute inset-0 bg-red-900/80 items-center justify-center hidden group-hover:flex transition-all"
+                                       title="Remove this image"
+                                     >
+                                        <FiTrash2 className="text-white" />
+                                     </button>
+                                  </div>
+                                ) : (
+                                  <div className="w-16 h-16 rounded-lg bg-amber-900/20 border border-amber-900/30 flex items-center justify-center text-amber-100/20"><FiPlus /></div>
+                                )}
+                              </td>
+                              <td className="p-4">
+                                <div className="font-bold text-amber-50">{item.name}</div>
+                                <div className="text-[10px] text-amber-100/50 mt-0.5">
+                                  {item.category?.name || 'No Category'} • 
+                                  {editingPriceId === item._id ? (
+                                    <div className="inline-flex items-center ml-2 gap-1">
+                                      <span className="text-amber-400 font-bold">₹</span>
+                                      <input 
+                                        type="number" 
+                                        className="bg-black/40 border border-amber-500 rounded p-1 text-[10px] text-amber-50 w-16 outline-none"
+                                        value={editingPriceValue}
+                                        onChange={e => setEditingPriceValue(e.target.value)}
+                                        autoFocus
+                                      />
+                                      <button 
+                                        onClick={() => handleUpdatePrice(item._id)}
+                                        className="bg-green-600 text-white p-1 rounded hover:bg-green-500"
+                                      >
+                                        <FiCheckCircle size={12} />
+                                      </button>
+                                      <button 
+                                        onClick={() => { setEditingPriceId(null); setEditingPriceValue(''); }}
+                                        className="bg-red-600 text-white p-1 rounded hover:bg-red-500"
+                                      >
+                                        <FiActivity size={12} />
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <span className="ml-1 cursor-pointer hover:text-amber-400 font-bold underline decoration-amber-500/30" onClick={() => { setEditingPriceId(item._id); setEditingPriceValue(item.price); }}>
+                                      ₹{item.price} <FiEdit className="inline mb-0.5 opacity-50" />
+                                    </span>
+                                  )}
+                                </div>
+                                <div className={`text-[10px] inline-flex items-center px-2 py-0.5 rounded-full mt-2 font-bold uppercase ${item.isAvailable ? 'bg-green-900/20 text-green-400 border border-green-800/30' : 'bg-red-900/20 text-red-400 border border-red-800/30'}`}>
+                                  {item.isAvailable ? 'Available' : 'Sold Out'}
+                                </div>
+                              </td>
+                              <td className="p-4">
+                                <div className="flex justify-center gap-2">
+                                   <button 
+                                     onClick={() => handleToggleAvailability(item._id)}
+                                     className="p-2 rounded bg-amber-900/50 text-amber-400 border border-amber-800 hover:bg-amber-800 transition-all"
+                                     title="Toggle Availability"
+                                   >
+                                      <FiClock />
+                                   </button>
+                                   <button 
+                                     onClick={() => handleDeleteProduct(item._id)}
+                                     className="p-2 rounded bg-red-950/50 text-red-500 border border-red-900/50 hover:bg-red-900 transition-all"
+                                     title="Delete Product"
+                                   >
+                                      <FiTrash2 />
+                                   </button>
+                                </div>
+                              </td>
+                            </tr>
+                          )) : (
+                            <tr><td colSpan="3" className="p-10 text-center text-amber-100/40 text-xs uppercase tracking-widest">No products found. Add one above!</td></tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                 </div>
+               </div>
+             </div>
+           )}
            {/* ALL ORDERS TAB */}
            {activeTab === 'all-orders' && (
              <div className="space-y-4">
