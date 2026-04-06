@@ -2,10 +2,12 @@ import HeroSection from '@/components/HeroSection';
 import ProductCard from '@/components/ProductCard';
 import Link from 'next/link';
 
+import NoticeBoard from '@/components/NoticeBoard';
+
 // Fetch featured items
 async function getFeaturedItems() {
   try {
-    const res = await fetch('http://localhost:5000/api/menu?limit=4&sortBy=ratings.average&order=desc', { 
+    const res = await fetch('http://localhost:5000/api/menu?limit=4&isPopular=true', { 
       next: { revalidate: 60 } // Revalidate every minute
     });
     if (!res.ok) return [];
@@ -22,6 +24,7 @@ export default async function Home() {
 
   return (
     <>
+      <NoticeBoard />
       <HeroSection />
 
       {/* Featured Items Section */}

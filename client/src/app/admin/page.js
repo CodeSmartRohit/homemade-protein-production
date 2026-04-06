@@ -4,7 +4,8 @@ import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
-import { FiUsers, FiShoppingBag, FiDollarSign, FiActivity, FiTrendingUp, FiMessageSquare, FiPhone, FiMail, FiCheckCircle, FiClock, FiMapPin, FiTrash2, FiPlus, FiEdit } from 'react-icons/fi';
+import { resolveImageUrl } from '@/lib/imageHelper';
+import { FiUsers, FiShoppingBag, FiDollarSign, FiActivity, FiTrendingUp, FiMessageSquare, FiPhone, FiMail, FiCheckCircle, FiClock, FiMapPin, FiTrash2, FiPlus, FiEdit, FiX } from 'react-icons/fi';
 import { socket, connectSocket } from '@/lib/socket';
 
 export default function AdminDashboard() {
@@ -26,6 +27,13 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [paymentFilter, setPaymentFilter] = useState('all'); // all, pending, paid, failed
 
+  // Messaging Modal State
+  const [msgModalOpen, setMsgModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [msgTitle, setMsgTitle] = useState('Important Message');
+  const [msgBody, setMsgBody] = useState('');
+  const [sendingMsg, setSendingMsg] = useState(false);
+
   // Form states for Menu Management
   const [newCat, setNewCat] = useState({ name: '', description: '' });
   const [newItem, setNewItem] = useState({
@@ -34,6 +42,11 @@ export default function AdminDashboard() {
   const [menuItems, setMenuItems] = useState([]);
   const [editingPriceId, setEditingPriceId] = useState(null);
   const [editingPriceValue, setEditingPriceValue] = useState('');
+  const [editingCategoryId, setEditingCategoryId] = useState(null);
+  
+  // Settings & Broadcast
+  const [siteSettings, setSiteSettings] = useState({ noticeBoard: '', qrCodeImage: '', upiIds: ['rp111monster@oksbi', '9340623657@ybl'] });
+  const [broadcastModalOpen, setBroadcastModalOpen] = useState(false);
 
   useEffect(() => {
     connectSocket();
@@ -72,14 +85,15 @@ export default function AdminDashboard() {
   const fetchAdminData = async () => {
     setLoading(true);
     try {
-      const [statsRes, usersRes, deletedUsersRes, ordersRes, requestsRes, catsRes, menuRes] = await Promise.all([
+      const [statsRes, usersRes, deletedUsersRes, ordersRes, requestsRes, catsRes, menuRes, settingsRes] = await Promise.all([
         api.get('/admin/dashboard'),
         api.get('/admin/users'), 
         api.get('/admin/users/deleted'),
         api.get('/orders/all'),
         api.get('/requests/all'),
         api.get('/categories'),
-        api.get('/menu/admin/all')
+        api.get('/menu/admin/all'),
+        api.get('/admin/settings')
       ]);
       setUsers(usersRes.data?.data?.users || []);
       setDeletedUsers(deletedUsersRes.data?.data?.users || []);
@@ -96,6 +110,14 @@ export default function AdminDashboard() {
           pendingRequests: statsRes.data.data.stats.pendingRequests || 0,
           paymentStats: statsRes.data.data.paymentStats || { pending: 0, paid: 0, failed: 0 }
         });
+      }
+      if (settingsRes?.data?.data?.settings) {
+         const setts = settingsRes.data.data.settings;
+         setSiteSettings({
+            noticeBoard: setts.noticeBoard || '',
+            qrCodeImage: setts.qrCodeImage || '',
+            upiIds: setts.upiIds?.length ? setts.upiIds : siteSettings.upiIds
+         });
       }
 
     } catch (err) {
@@ -178,9 +200,38 @@ export default function AdminDashboard() {
     const dDate = new Date(deletedAt);
     const now = new Date();
     const diffTime = dDate.getTime() + (10 * 24 * 60 * 60 * 1000) - now.getTime();
-    const diffDays = Math.ceil(diffTime / (10 * 24 * 60 * 60 * 10)); // Simplified
     const actualDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     return actualDays > 0 ? actualDays : 0;
+  };
+
+  const handleSendNotification = async (e) => {
+    e.preventDefault();
+    if (!msgBody) return toast.error('Message body is required');
+    
+    setSendingMsg(true);
+    try {
+      if (selectedUser._id === 'all') {
+        await api.post(`/admin/users/broadcast`, {
+          title: msgTitle,
+          message: msgBody
+        });
+        toast.success('Message broadcasted to all users');
+      } else {
+        await api.post(`/admin/users/${selectedUser._id}/notify`, {
+          title: msgTitle,
+          message: msgBody,
+          type: 'info'
+        });
+        toast.success('Message sent to ' + selectedUser.name);
+      }
+      setMsgModalOpen(false);
+      setMsgBody('');
+      setMsgTitle('Important Message');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to send message');
+    } finally {
+      setSendingMsg(false);
+    }
   };
 
   const handleCreateCategory = async (e) => {
@@ -266,6 +317,75 @@ export default function AdminDashboard() {
       toast.error(err.response?.data?.message || 'Failed to update price');
     }
   };
+  const handleSaveSettings = async (e) => {
+    e.preventDefault();
+    try {
+      await api.put('/admin/settings', siteSettings);
+      toast.success('Settings updated successfully');
+    } catch (err) {
+      toast.error('Failed to update settings');
+    }
+  };
+
+  const handleUpdateCategory = async (id, categoryId) => {
+    if (!categoryId) return;
+    try {
+      const payload = new FormData();
+      payload.append('category', categoryId);
+      const res = await api.put(`/menu/${id}`, payload);
+      toast.success('Category updated safely');
+      setMenuItems(menuItems.map(item => item._id === id ? { ...item, category: res.data.data.item.category } : item));
+    } catch (err) {
+      toast.error('Failed to update category');
+    }
+  };
+
+  const handleHardDeleteUser = async (userId) => {
+    if (!window.confirm('WARNING: PERMANENT DELETION. This cannot be undone. Proceed?')) return;
+    try {
+      await api.delete(`/admin/users/${userId}/hard`);
+      toast.success('User permanently deleted');
+      setDeletedUsers(deletedUsers.filter(u => u._id !== userId));
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to permanently delete user');
+    }
+  };
+
+  const handleBroadcastMessage = async (e) => {
+    e.preventDefault();
+    if (!msgBody) return toast.error('Message body is required');
+    
+    setSendingMsg(true);
+    try {
+      await api.post('/admin/users/broadcast', {
+        title: msgTitle,
+        message: msgBody,
+        type: 'info'
+      });
+      toast.success('Broadcast sent to all users');
+      setBroadcastModalOpen(false);
+      setMsgBody('');
+      setMsgTitle('Important Notice');
+    } catch (err) {
+      toast.error('Failed to send broadcast');
+    } finally {
+      setSendingMsg(false);
+    }
+  };
+
+  const handleTogglePopular = async (id) => {
+    const item = menuItems.find(i => i._id === id);
+    if (!item) return;
+    try {
+      const payload = new FormData();
+      payload.append('isPopular', !item.isPopular);
+      const res = await api.put(`/menu/${id}`, payload);
+      toast.success(item.isPopular ? 'Removed from Popular' : 'Marked as Popular');
+      setMenuItems(menuItems.map(i => i._id === id ? { ...i, isPopular: !item.isPopular } : i));
+    } catch (err) {
+       toast.error('Failed to update popular status');
+    }
+  };
 
   if (authLoading || loading) {
     return (
@@ -348,17 +468,60 @@ export default function AdminDashboard() {
                    </div>
                 </div>
 
-                <div className="bg-amber-950/30 border border-amber-900/50 rounded-2xl p-8 flex flex-col items-center justify-center min-h-[300px] text-center">
-                   <FiTrendingUp className="text-amber-500/30 w-16 h-16 mb-4" />
-                   <p className="text-amber-100/50 text-lg">Analytics charts and deeper insights coming in v2.0</p>
+                <div className="bg-amber-950/30 border border-amber-900/50 rounded-2xl p-8">
+                   <h3 className="font-playfair text-2xl font-bold text-amber-50 mb-6 border-b border-amber-900 pb-2">Global Settings</h3>
+                   <form onSubmit={handleSaveSettings} className="space-y-6">
+                      <div>
+                         <label className="block text-amber-500 text-xs font-bold uppercase tracking-widest mb-2">Notice Board Text</label>
+                         <textarea 
+                           className="w-full bg-black/40 border border-amber-900 rounded-xl p-4 text-amber-50 focus:border-amber-500 outline-none"
+                           rows="3"
+                           value={siteSettings.noticeBoard}
+                           onChange={(e) => setSiteSettings({...siteSettings, noticeBoard: e.target.value})}
+                           placeholder="Type an announcement to appear on the homepage..."
+                         />
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                          <label className="block text-amber-500 text-xs font-bold uppercase tracking-widest mb-2">UPI IDs (Comma separated)</label>
+                          <input 
+                            type="text"
+                            className="w-full bg-black/40 border border-amber-900 rounded-xl p-4 text-amber-50 focus:border-amber-500 outline-none"
+                            value={siteSettings.upiIds.join(', ')}
+                            onChange={(e) => setSiteSettings({...siteSettings, upiIds: e.target.value.split(',').map(s=>s.trim())})}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-amber-500 text-xs font-bold uppercase tracking-widest mb-2">QR Code Image Path / URL</label>
+                          <input 
+                            type="text"
+                            className="w-full bg-black/40 border border-amber-900 rounded-xl p-4 text-amber-50 focus:border-amber-500 outline-none"
+                            value={siteSettings.qrCodeImage}
+                            onChange={(e) => setSiteSettings({...siteSettings, qrCodeImage: e.target.value})}
+                            placeholder="/upi-qr-1.png (Upload to public folder)"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex justify-end">
+                         <button type="submit" className="bg-amber-500 text-amber-950 font-bold px-8 py-3 rounded-xl shadow-[0_0_15px_rgba(245,158,11,0.2)] hover:bg-amber-400">
+                           Save Settings
+                         </button>
+                      </div>
+                   </form>
                 </div>
              </div>
            )}
 
            {/* USERS TAB */}
            {activeTab === 'users' && (
-             <div className="bg-amber-950/50 border border-amber-900 rounded-2xl overflow-hidden shadow-xl">
-               <div className="overflow-x-auto">
+             <div className="space-y-6">
+               <div className="flex justify-end">
+                 <button onClick={() => { setSelectedUser({ _id: 'all', name: 'All Registered Users' }); setMsgModalOpen(true); }} className="bg-amber-500 text-amber-950 font-bold px-6 py-2 rounded-xl flex items-center gap-2 hover:bg-amber-400 transition-all shadow-[0_0_15px_rgba(245,158,11,0.2)]">
+                   <FiMessageSquare /> Broadcast Message to All
+                 </button>
+               </div>
+               <div className="bg-amber-950/50 border border-amber-900 rounded-2xl overflow-hidden shadow-xl">
+                 <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-amber-900/50 text-amber-400 text-xs uppercase tracking-wider border-b border-amber-800">
@@ -404,6 +567,13 @@ export default function AdminDashboard() {
                              >
                                <FiTrash2 />
                              </button>
+                             <button
+                               onClick={() => { setSelectedUser(u); setMsgModalOpen(true); }}
+                               className="p-2 text-amber-500 hover:bg-amber-500/10 rounded-lg transition-colors"
+                               title="Send Message"
+                             >
+                               <FiMessageSquare />
+                             </button>
                            </div>
                         </td>
                       </tr>
@@ -445,7 +615,7 @@ export default function AdminDashboard() {
                            </td>
                            <td className="p-4">
                              <span className="text-[10px] px-2 py-1 rounded bg-red-900/30 text-red-400 border border-red-800 font-bold uppercase tracking-widest">
-                               Deleted
+                                Deleted
                              </span>
                              <div className="text-[10px] text-amber-100/30 mt-1 uppercase tracking-tighter">On: {new Date(u.deletedAt).toLocaleDateString()}</div>
                            </td>
@@ -455,12 +625,21 @@ export default function AdminDashboard() {
                               </span>
                            </td>
                            <td className="p-4">
-                              <button
-                                onClick={() => handleRestoreUser(u._id)}
-                                className="px-4 py-2 bg-amber-500 text-amber-950 text-xs font-bold rounded-lg hover:bg-amber-400 transition-all flex items-center gap-2"
-                              >
-                                <FiCheckCircle size={14} /> Restore User
-                              </button>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => handleRestoreUser(u._id)}
+                                  className="px-4 py-2 bg-amber-500 text-amber-950 text-xs font-bold rounded-lg hover:bg-amber-400 transition-all flex items-center gap-2"
+                                >
+                                  <FiCheckCircle size={14} /> Restore
+                                </button>
+                                <button
+                                  onClick={() => handleHardDeleteUser(u._id)}
+                                  className="px-4 py-2 bg-red-950/50 text-red-500 border border-red-900/50 text-xs font-bold rounded-lg hover:bg-red-900 transition-all flex items-center gap-2"
+                                  title="Permanently Delete Now"
+                                >
+                                  <FiTrash2 size={14} /> Delete
+                                </button>
+                              </div>
                            </td>
                          </tr>
                        )) : (
@@ -601,7 +780,7 @@ export default function AdminDashboard() {
                               <td className="p-4 w-20">
                                 {item.image ? (
                                   <div className="relative group w-16 h-16 rounded-lg overflow-hidden border border-amber-900/50 bg-black/20">
-                                     <img src={item.image.startsWith('http') ? item.image : `${process.env.NEXT_PUBLIC_API_URL}${item.image}`} alt={item.name} className="w-full h-full object-cover" />
+                                     <img src={resolveImageUrl(item.image)} alt={item.name} className="w-full h-full object-cover" />
                                      <button 
                                        onClick={() => handleDeleteImage(item._id, item.image)}
                                        className="absolute inset-0 bg-red-900/80 items-center justify-center hidden group-hover:flex transition-all"
@@ -616,8 +795,34 @@ export default function AdminDashboard() {
                               </td>
                               <td className="p-4">
                                 <div className="font-bold text-amber-50">{item.name}</div>
-                                <div className="text-[10px] text-amber-100/50 mt-0.5">
-                                  {item.category?.name || 'No Category'} • 
+                                <div className="text-[10px] text-amber-100/50 mt-1 mb-1 flex flex-wrap items-center gap-2">
+                                  {editingCategoryId === item._id ? (
+                                    <div className="flex items-center gap-1">
+                                      <select 
+                                        className="bg-black/80 border border-amber-500 text-amber-300 rounded px-1 py-0.5 outline-none font-bold min-w-[100px]"
+                                        value={item.category?._id || ''}
+                                        onChange={(e) => {
+                                          handleUpdateCategory(item._id, e.target.value);
+                                          setEditingCategoryId(null);
+                                        }}
+                                      >
+                                        <option value="" disabled>Select Category</option>
+                                        {categories.map(cat => <option className="bg-amber-950 text-amber-100" key={cat._id} value={cat._id}>{cat.name}</option>)}
+                                      </select>
+                                      <button 
+                                        onClick={() => setEditingCategoryId(null)}
+                                        className="bg-red-600 text-white p-1 rounded hover:bg-red-500"
+                                        title="Cancel"
+                                      >
+                                        <FiX size={10} />
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <span className="cursor-pointer hover:text-amber-400 font-bold underline decoration-amber-500/30" onClick={() => setEditingCategoryId(item._id)}>
+                                      {item.category?.name || 'No Category'} <FiEdit className="inline mb-0.5 opacity-50" />
+                                    </span>
+                                  )}
+                                  <span>•</span>
                                   {editingPriceId === item._id ? (
                                     <div className="inline-flex items-center ml-2 gap-1">
                                       <span className="text-amber-400 font-bold">₹</span>
@@ -638,7 +843,7 @@ export default function AdminDashboard() {
                                         onClick={() => { setEditingPriceId(null); setEditingPriceValue(''); }}
                                         className="bg-red-600 text-white p-1 rounded hover:bg-red-500"
                                       >
-                                        <FiActivity size={12} />
+                                        <FiX size={12} />
                                       </button>
                                     </div>
                                   ) : (
@@ -650,9 +855,21 @@ export default function AdminDashboard() {
                                 <div className={`text-[10px] inline-flex items-center px-2 py-0.5 rounded-full mt-2 font-bold uppercase ${item.isAvailable ? 'bg-green-900/20 text-green-400 border border-green-800/30' : 'bg-red-900/20 text-red-400 border border-red-800/30'}`}>
                                   {item.isAvailable ? 'Available' : 'Sold Out'}
                                 </div>
+                                {item.isPopular && (
+                                  <div className="text-[10px] inline-flex items-center px-2 py-0.5 rounded-full mt-2 ml-2 font-bold uppercase bg-amber-900/30 text-amber-500 border border-amber-500/50">
+                                    ★ Popular
+                                  </div>
+                                )}
                               </td>
                               <td className="p-4">
                                 <div className="flex justify-center gap-2">
+                                   <button 
+                                     onClick={() => handleTogglePopular(item._id)}
+                                     className={`p-2 rounded border transition-all ${item.isPopular ? 'bg-amber-500 text-amber-950 border-amber-500' : 'bg-amber-900/50 text-amber-400 border-amber-800 hover:bg-amber-800'}`}
+                                     title={item.isPopular ? "Remove from Popular" : "Mark as Popular"}
+                                   >
+                                      ★
+                                   </button>
                                    <button 
                                      onClick={() => handleToggleAvailability(item._id)}
                                      className="p-2 rounded bg-amber-900/50 text-amber-400 border border-amber-800 hover:bg-amber-800 transition-all"
@@ -742,6 +959,11 @@ export default function AdminDashboard() {
                                       <span className="leading-tight text-left">
                                          {o.deliveryAddress.street}, {o.deliveryAddress.city}, {o.deliveryAddress.state} {o.deliveryAddress.pincode}
                                          {o.deliveryAddress.label && <span className="ml-1 opacity-60">({o.deliveryAddress.label})</span>}
+                                         {o.deliveryAddress.lat && o.deliveryAddress.lng && (
+                                            <a href={`https://www.google.com/maps/search/?api=1&query=${o.deliveryAddress.lat},${o.deliveryAddress.lng}`} target="_blank" rel="noreferrer" className="block text-blue-400 hover:text-blue-300 mt-1 text-xs underline">
+                                                [View on Map]
+                                            </a>
+                                         )}
                                       </span>
                                    </span>
                                  )}
@@ -853,6 +1075,56 @@ export default function AdminDashboard() {
            )}
         </div>
       </div>
+
+      {/* Messaging Modal */}
+      {msgModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+          <div className="bg-amber-950 border border-amber-900 rounded-2xl w-full max-w-md shadow-2xl p-6 animate-scale-in">
+             <div className="flex justify-between items-center mb-6">
+                <h3 className="font-playfair text-xl font-bold text-amber-50">Send Message to {selectedUser?.name}</h3>
+                <button onClick={() => setMsgModalOpen(false)} className="text-amber-100/40 hover:text-white transition-colors text-xl"><FiX /></button>
+             </div>
+             <form onSubmit={handleSendNotification} className="space-y-4">
+                <div>
+                   <label className="block text-[10px] uppercase tracking-widest text-amber-500 font-bold mb-1.5">Subject / Title</label>
+                   <input 
+                     type="text" 
+                     className="w-full bg-black/40 border border-amber-900 rounded-xl p-3 text-white outline-none focus:border-amber-500"
+                     value={msgTitle}
+                     onChange={(e) => setMsgTitle(e.target.value)}
+                   />
+                </div>
+                <div>
+                   <label className="block text-[10px] uppercase tracking-widest text-amber-500 font-bold mb-1.5">Message Content</label>
+                   <textarea 
+                     rows="5"
+                     className="w-full bg-black/40 border border-amber-900 rounded-xl p-3 text-white outline-none focus:border-amber-500 text-sm"
+                     placeholder="Type your message here..."
+                     value={msgBody}
+                     onChange={(e) => setMsgBody(e.target.value)}
+                     required
+                   />
+                </div>
+                <div className="flex gap-3 pt-2">
+                   <button 
+                     type="button"
+                     onClick={() => setMsgModalOpen(false)}
+                     className="flex-1 py-3 rounded-xl border border-amber-900 text-amber-100/60 font-bold hover:bg-amber-900/20 transition-all"
+                   >
+                      Cancel
+                   </button>
+                   <button 
+                     type="submit"
+                     disabled={sendingMsg}
+                     className="flex-1 py-3 rounded-xl bg-amber-500 text-amber-950 font-black hover:bg-amber-400 transition-all disabled:opacity-50"
+                   >
+                      {sendingMsg ? 'Sending...' : 'Send Message'}
+                   </button>
+                </div>
+             </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -16,6 +16,8 @@ const userSchema = new mongoose.Schema({
     city: { type: String },
     state: { type: String },
     pincode: { type: String },
+    lat: { type: Number },
+    lng: { type: Number },
     isDefault: { type: Boolean, default: false }
   }],
   refreshToken: { type: String },

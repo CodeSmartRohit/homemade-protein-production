@@ -28,6 +28,10 @@ const nextConfig = {
         protocol: 'http',
         hostname: 'images.unsplash.com',
       },
+      {
+        protocol: 'https',
+        hostname: 'homemade-protein-production-production.up.railway.app',
+      }
     ],
     unoptimized: process.env.NODE_ENV === 'development',
   },

@@ -14,6 +14,7 @@ exports.getAllItems = async (req, res, next) => {
       category,
       search,
       isVeg,
+      isPopular,
       sortBy = 'createdAt',
       order = 'desc',
       minPrice,
@@ -22,6 +23,10 @@ exports.getAllItems = async (req, res, next) => {
     } = req.query;
 
     const query = { isAvailable: true };
+    
+    if (isPopular === 'true') {
+      query.isPopular = true;
+    }
 
     // Category filter
     if (category) {
@@ -179,6 +184,7 @@ exports.updateItem = async (req, res, next) => {
     if (updates.discountPrice) updates.discountPrice = Number(updates.discountPrice);
     if (updates.preparationTime) updates.preparationTime = Number(updates.preparationTime);
     if (updates.isVeg !== undefined) updates.isVeg = updates.isVeg === 'true' || updates.isVeg === true;
+    if (updates.isPopular !== undefined) updates.isPopular = updates.isPopular === 'true' || updates.isPopular === true;
 
     // Handle new image upload
     if (req.files && req.files.image && req.files.image[0]) {

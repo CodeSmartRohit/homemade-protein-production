@@ -2,6 +2,8 @@ const User = require('../models/User');
 const Order = require('../models/Order');
 const MenuItem = require('../models/MenuItem');
 const CustomRequest = require('../models/CustomRequest');
+const Notification = require('../models/Notification');
+const Settings = require('../models/Settings');
 
 /**
  * GET /api/admin/dashboard — Dashboard stats
@@ -273,6 +275,37 @@ exports.getDeletedUsers = async (req, res, next) => {
 };
 
 /**
+ * POST /api/admin/users/:id/notify — Send a notification to a specific user
+ */
+exports.sendNotification = async (req, res, next) => {
+  try {
+    const { title, message, type } = req.body;
+    const recipientId = req.params.id;
+    const senderId = req.user._id;
+
+    if (!message) {
+      return res.status(400).json({ success: false, message: 'Message is required.' });
+    }
+
+    const notification = await Notification.create({
+      recipient: recipientId,
+      sender: senderId,
+      title: title || 'Message from Admin',
+      message: message,
+      type: type || 'info'
+    });
+
+    res.json({
+      success: true,
+      message: 'Notification sent successfully.',
+      data: { notification }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
  * GET /api/admin/analytics — Revenue and order analytics
  */
 exports.getAnalytics = async (req, res, next) => {
@@ -348,6 +381,117 @@ exports.getAnalytics = async (req, res, next) => {
         topItems,
         paymentMethods: paymentMethodsMap,
       },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * DELETE /api/admin/users/:id/hard — Permanently delete user
+ */
+exports.hardDeleteUser = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    if (id === req.user._id.toString()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot delete your own account.',
+      });
+    }
+
+    const user = await User.findByIdAndDelete(id);
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found.' });
+    }
+
+    res.json({
+      success: true,
+      message: 'User permanently deleted.',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * POST /api/admin/users/broadcast — Send a notification to all users
+ */
+exports.broadcastNotification = async (req, res, next) => {
+  try {
+    const { title, message, type } = req.body;
+    const senderId = req.user._id;
+
+    if (!message) {
+      return res.status(400).json({ success: false, message: 'Message is required.' });
+    }
+
+    // Get all users
+    const users = await User.find({ role: 'customer', isDeleted: false }, '_id');
+    
+    // In a real scenario, we might iterate or use a mass insert if Notification model supported it.
+    // Assuming Notification model has a broadcast or we loop (simplified loop for small scale):
+    const notificationPromises = users.map(u => Notification.create({
+      recipient: u._id,
+      sender: senderId,
+      title: title || 'Message from Admin',
+      message: message,
+      type: type || 'info'
+    }));
+
+    await Promise.all(notificationPromises);
+
+    res.json({
+      success: true,
+      message: `Broadcast message sent to ${users.length} users.`,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * GET /api/admin/settings — Get global settings
+ */
+exports.getSettings = async (req, res, next) => {
+  try {
+    let settings = await Settings.findOne({});
+    if (!settings) {
+      settings = await Settings.create({});
+    }
+    
+    res.json({
+      success: true,
+      data: { settings }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * PUT /api/admin/settings — Update global settings
+ */
+exports.updateSettings = async (req, res, next) => {
+  try {
+    const { noticeBoard, qrCodeImage, upiIds } = req.body;
+    
+    let settings = await Settings.findOne({});
+    if (!settings) {
+      settings = await Settings.create({ noticeBoard, qrCodeImage, upiIds });
+    } else {
+      if (noticeBoard !== undefined) settings.noticeBoard = noticeBoard;
+      if (qrCodeImage !== undefined) settings.qrCodeImage = qrCodeImage;
+      if (upiIds !== undefined) settings.upiIds = upiIds;
+      await settings.save();
+    }
+    
+    res.json({
+      success: true,
+      message: 'Settings updated successfully',
+      data: { settings }
     });
   } catch (error) {
     next(error);

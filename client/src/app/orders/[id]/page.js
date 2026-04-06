@@ -180,7 +180,7 @@ export default function OrderDetailPage({ params }) {
         </div>
         
         <div className="flex items-center gap-4">
-           {(order.status === 'pending' || order.status === 'confirmed') && (
+           {(['pending', 'confirmed', 'preparing'].includes(order.status)) && (
             <button 
               onClick={cancelOrder}
               className="text-red-400 border border-red-900/50 hover:bg-red-900/20 px-6 py-2 rounded-full font-bold transition-all shadow-sm"

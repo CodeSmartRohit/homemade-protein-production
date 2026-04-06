@@ -21,6 +21,7 @@ const menuItemSchema = new mongoose.Schema({
     average: { type: Number, default: 0 },
     count: { type: Number, default: 0 },
   },
+  isPopular: { type: Boolean, default: false },
 }, { timestamps: true });
 menuItemSchema.index({ name: 'text', description: 'text' });
 menuItemSchema.index({ category: 1 });

@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { FiShoppingCart, FiMenu, FiX, FiUser } from 'react-icons/fi';
+import { FiShoppingCart, FiMenu, FiX, FiUser, FiBell } from 'react-icons/fi';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import CartSidebar from '@/components/CartSidebar';
@@ -14,6 +14,18 @@ export default function Navbar() {
   const pathname = usePathname();
   const { user, isAuthenticated, isChef, isAdmin, logout } = useAuth();
   const { itemCount } = useCart();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    if (isAuthenticated && !isAdmin && !isChef) {
+      api.get('/notifications')
+        .then(res => {
+          const unread = res.data.data.notifications.filter(n => !n.isRead).length;
+          setUnreadCount(unread);
+        })
+        .catch(err => console.error('Failed to fetch notifications', err));
+    }
+  }, [isAuthenticated, isAdmin, isChef]);
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
@@ -42,7 +54,7 @@ export default function Navbar() {
       >
         <div className="container mx-auto px-6 md:px-12 flex justify-between items-center">
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="relative w-8 h-8 md:w-10 md:h-10 rounded-xl overflow-hidden shadow-lg shadow-amber-500/20 border border-amber-500/30 group-hover:scale-110 transition-transform duration-300">
+            <div className="relative w-12 h-12 md:w-16 md:h-16 rounded-xl overflow-hidden shadow-lg shadow-amber-500/20 border border-amber-500/30 group-hover:scale-110 transition-transform duration-300">
                <img 
                  src="/logo.png" 
                  alt="HOMEMADE Protein Logo" 
@@ -100,6 +112,22 @@ export default function Navbar() {
             </button>
             )}
 
+            {/* Notifications Icon (for customers) */}
+            {(isAuthenticated && !isChef && !isAdmin) && (
+              <Link
+                href="/notifications"
+                className="relative p-2 text-amber-100 hover:text-amber-400 transition-colors"
+                title="View Messages from Admin"
+              >
+                <FiBell className="w-5 h-5" />
+                {unreadCount > 0 && (
+                  <span className="absolute top-0 right-0 bg-red-500 text-white text-[10px] font-bold h-4 w-4 rounded-full flex justify-center items-center ring-2 ring-black">
+                    {unreadCount}
+                  </span>
+                )}
+              </Link>
+            )}
+
             {/* Auth/Profile */}
             <div className="hidden md:flex items-center space-x-3">
               {isAuthenticated ? (
@@ -112,6 +140,11 @@ export default function Navbar() {
                     <Link href="/profile" className="block px-4 py-2 text-sm text-amber-100 hover:bg-amber-800">
                       Profile
                     </Link>
+                    {(!isAdmin && !isChef) && (
+                      <Link href="/notifications" className="block px-4 py-2 text-sm text-amber-100 hover:bg-amber-800">
+                        Admin Messages
+                      </Link>
+                    )}
                     <button
                       onClick={logout}
                       className="w-full text-left block px-4 py-2 text-sm text-amber-100 hover:bg-amber-800"

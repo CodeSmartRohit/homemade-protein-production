@@ -23,7 +23,7 @@ export default function ProfilePage() {
 
   // Address State
   const [showAddressForm, setShowAddressForm] = useState(false);
-  const [addressData, setAddressData] = useState({ type: 'Home', street: '', city: '', state: '', zipCode: '' });
+  const [addressData, setAddressData] = useState({ type: 'Home', street: '', city: '', state: '', zipCode: '', lat: null, lng: null });
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -84,7 +84,7 @@ export default function ProfilePage() {
       await updateProfile({ addresses: newAddresses });
       toast.success('Address added successfully');
       setShowAddressForm(false);
-      setAddressData({ type: 'Home', street: '', city: '', state: '', zipCode: '' });
+      setAddressData({ type: 'Home', street: '', city: '', state: '', zipCode: '', lat: null, lng: null });
     } catch (err) {
       toast.error('Failed to add address');
     } finally {
@@ -101,6 +101,27 @@ export default function ProfilePage() {
      } catch(err) {
        toast.error('Failed to remove address');
      }
+  };
+
+  const handleDetectLocation = () => {
+    if (navigator.geolocation) {
+      toast.loading('Detecting location...', { id: 'location' });
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setAddressData(prev => ({
+            ...prev,
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          }));
+          toast.success('Location detected successfully!', { id: 'location' });
+        },
+        (error) => {
+          toast.error('Failed to detect location. Please check browser permissions.', { id: 'location' });
+        }
+      );
+    } else {
+      toast.error('Geolocation is not supported by your browser');
+    }
   };
 
   return (
@@ -273,6 +294,11 @@ export default function ProfilePage() {
                              <input type="text" required value={addressData.state} onChange={(e) => setAddressData({...addressData, state: e.target.value})} className="w-1/2 bg-amber-950 border border-amber-800 rounded-lg p-3 text-amber-50 focus:border-amber-500" placeholder="NY" />
                              <input type="text" required value={addressData.zipCode} onChange={(e) => setAddressData({...addressData, zipCode: e.target.value})} className="w-1/2 bg-amber-950 border border-amber-800 rounded-lg p-3 text-amber-50 focus:border-amber-500" placeholder="10001" />
                            </div>
+                         </div>
+                         <div className="md:col-span-2 mt-2">
+                           <button type="button" onClick={handleDetectLocation} className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-amber-900/30 border border-amber-500/30 text-amber-400 rounded-lg hover:bg-amber-900/50 transition-colors">
+                             <FiMapPin /> {addressData.lat && addressData.lng ? `Location Detected (${addressData.lat.toFixed(4)}, ${addressData.lng.toFixed(4)}) - Click to update` : 'Detect Current GPS Location'}
+                           </button>
                          </div>
                        </div>
                        

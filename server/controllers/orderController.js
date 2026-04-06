@@ -72,7 +72,9 @@ exports.createOrder = async (req, res, next) => {
         street: deliveryAddress.street,
         city: deliveryAddress.city,
         state: deliveryAddress.state,
-        pincode: deliveryAddress.pincode || deliveryAddress.zipCode
+        pincode: deliveryAddress.pincode || deliveryAddress.zipCode,
+        lat: deliveryAddress.lat,
+        lng: deliveryAddress.lng
       } : undefined,
       deliveryType: deliveryType || 'delivery',
       specialInstructions,
@@ -101,6 +103,14 @@ exports.createOrder = async (req, res, next) => {
         order: populatedOrder,
       });
     }
+
+    // --- SMS Notification Mock (Fast2SMS / Twilio) ---
+    // In a real production setup, insert API call to Fast2SMS here.
+    // e.g. axios.post('https://www.fast2sms.com/dev/bulkV2', { ... })
+    const ADMIN_PHONE = '9340623657';
+    console.log(`\n\n[SMS GATEWAY MOCK] -> Sending SMS to Admin at ${ADMIN_PHONE}`);
+    console.log(`[SMS CONTENT] -> New Order #${populatedOrder.orderNumber} received! Value: ₹${populatedOrder.totalAmount}. Please prepare food.`);
+    console.log(`[SMS GATEWAY MOCK] -> SMS delivered successfully to ${ADMIN_PHONE}!\n\n`);
 
     res.status(201).json({
       success: true,
@@ -159,7 +169,7 @@ exports.getOrder = async (req, res, next) => {
     }
 
     // Customers can only see their own orders
-    if (req.user.role === 'customer' && order.customer._id !== req.user._id && order.customer !== req.user._id) {
+    if (req.user.role === 'customer' && order.customer._id?.toString() !== req.user._id.toString() && order.customer?.toString() !== req.user._id.toString()) {
       return res.status(403).json({ success: false, message: 'Access denied.' });
     }
 
@@ -297,15 +307,15 @@ exports.cancelOrder = async (req, res, next) => {
 
     // Support both populated and unpopulated customer forms
     const orderCustomerId = order.customer._id || order.customer;
-    if (orderCustomerId !== req.user._id) {
+    if (orderCustomerId?.toString() !== req.user._id.toString()) {
       return res.status(403).json({ success: false, message: 'Access denied.' });
     }
 
-    // Can only cancel pending or confirmed orders
-    if (!['pending', 'confirmed'].includes(order.status)) {
+    // Can only cancel pending or confirmed or preparing orders
+    if (!['pending', 'confirmed', 'preparing'].includes(order.status)) {
       return res.status(400).json({
         success: false,
-        message: 'Order can only be cancelled when pending or confirmed.',
+        message: 'Order can only be cancelled when pending, confirmed, or preparing.',
       });
     }
 

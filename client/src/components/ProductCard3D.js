@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { FiPlus, FiHeart, FiClock } from 'react-icons/fi';
 import { useCart } from '@/context/CartContext';
 import toast from 'react-hot-toast';
+import { resolveImageUrl } from '@/lib/imageHelper';
 
 export default function ProductCard3D({ product }) {
   const { addToCart } = useCart();
@@ -83,7 +84,7 @@ export default function ProductCard3D({ product }) {
           className="relative w-full h-full drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)] group-hover:drop-shadow-[0_40px_80px_rgba(0,0,0,0.7)] transition-all duration-500"
         >
           <Image 
-            src={product.image || '/placeholder-food.jpg'} 
+            src={resolveImageUrl(product.image)} 
             layout="fill"
             objectFit="contain"
             className="object-contain"

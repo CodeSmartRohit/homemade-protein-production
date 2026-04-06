@@ -20,6 +20,12 @@ export default function CheckoutPage() {
   const [specialInstructions, setSpecialInstructions] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('card');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [settings, setSettings] = useState(null);
+  const [trxId, setTrxId] = useState('');
+
+  useEffect(() => {
+    api.get('/settings/public').then(res => setSettings(res.data?.data?.settings)).catch(console.error);
+  }, []);
 
   // Load Razorpay script
   useEffect(() => {
@@ -72,6 +78,16 @@ export default function CheckoutPage() {
     setIsProcessing(true);
     try {
       // 1. Create order
+      let finalInstructions = specialInstructions;
+      if (paymentMethod === 'upi_qr') {
+        if (!trxId) {
+           toast.error('Please enter the Transaction ID to confirm payment.');
+           setIsProcessing(false);
+           return;
+        }
+        finalInstructions += `\n[UPI TRX ID: ${trxId}]`;
+      }
+
       const orderData = {
         items: cart.map(item => ({
           menuItem: item.product._id,
@@ -80,8 +96,8 @@ export default function CheckoutPage() {
         })),
         deliveryAddress: deliveryType === 'delivery' ? addresses.find(a => (a._id || a.street) === selectedAddress) : undefined,
         deliveryType,
-        paymentMethod,
-        specialInstructions
+        paymentMethod: paymentMethod === 'upi_qr' ? 'online' : paymentMethod, // Store as online in DB
+        specialInstructions: finalInstructions
       };
 
       const orderRes = await api.post('/orders', orderData);
@@ -237,6 +253,11 @@ export default function CheckoutPage() {
                             <span className="font-bold border-b border-amber-500/50 text-amber-50 pb-0.5">{addr.label || 'Home'}</span>
                             <p className="text-amber-100/70 mt-2 text-sm">{addr.street}</p>
                             <p className="text-amber-100/70 text-sm">{addr.city}, {addr.state} {addr.pincode}</p>
+                            {addr.lat && addr.lng && (
+                              <p className="text-amber-500 text-xs mt-1 flex items-center gap-1">
+                                <FiMapPin className="w-3 h-3" /> Location Added
+                              </p>
+                            )}
                           </div>
                         </label>
                       ))}
@@ -368,6 +389,57 @@ export default function CheckoutPage() {
                       </span>
                       <p className="text-amber-100/60 text-sm mt-1">Pay with cash when your food arrives</p>
                     </div>
+                  </div>
+                </label>
+
+                <label 
+                  className={`flex justify-between items-center p-5 rounded-xl border cursor-pointer transition-all ${
+                    paymentMethod === 'upi_qr' 
+                      ? 'border-amber-500 bg-amber-900/40 shadow-[inset_0_0_20px_rgba(245,158,11,0.1)]' 
+                      : 'border-amber-900 hover:border-amber-700 bg-amber-950/20'
+                  }`}
+                >
+                  <div className="flex items-start w-full flex-col md:flex-row">
+                    <div className="flex items-center">
+                      <input 
+                        type="radio" 
+                        name="payment" 
+                        checked={paymentMethod === 'upi_qr'}
+                        onChange={() => setPaymentMethod('upi_qr')}
+                        className="form-radio text-amber-500 bg-amber-950 border-amber-800 focus:ring-amber-500 mt-1" 
+                      />
+                      <div className="ml-4">
+                        <span className="font-bold text-amber-50 flex items-center gap-2">
+                           📱 Pay via UPI / Scan QR
+                        </span>
+                        <p className="text-amber-100/60 text-sm mt-1 mb-2">Scan code or use ID below, then enter Trx ID.</p>
+                      </div>
+                    </div>
+                    {paymentMethod === 'upi_qr' && (
+                       <div className="ml-0 md:ml-12 mt-4 md:mt-0 w-full md:w-auto flex-1 bg-black/50 p-4 rounded-xl border border-amber-900/50">
+                         {settings?.upiIds?.length > 0 && (
+                            <div className="text-xs text-amber-100 mb-2">
+                               <span className="font-bold opacity-50 uppercase tracking-widest block mb-1">Our UPI IDs</span>
+                               {settings.upiIds.map(id => <div key={id} className="font-mono text-amber-500 bg-amber-950/50 px-2 py-1 rounded inline-block mr-2 mb-2">{id}</div>)}
+                            </div>
+                         )}
+                         {settings?.qrCodeImage && (
+                            <div className="mb-4">
+                               <img src={settings.qrCodeImage} alt="Payment QR Code" className="max-w-[150px] rounded-lg border-2 border-amber-500" onError={(e) => e.target.style.display = 'none'} />
+                            </div>
+                         )}
+                         <div>
+                            <input 
+                              type="text"
+                              value={trxId}
+                              onChange={(e) => setTrxId(e.target.value)}
+                              placeholder="Enter Transaction Reference ID"
+                              required={paymentMethod === 'upi_qr'}
+                              className="w-full bg-amber-950 border border-amber-800 text-amber-50 p-2 rounded focus:border-amber-500 outline-none text-sm font-mono placeholder:font-sans"
+                            />
+                         </div>
+                       </div>
+                    )}
                   </div>
                 </label>
               </div>

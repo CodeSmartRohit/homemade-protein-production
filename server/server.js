@@ -24,6 +24,8 @@ const paymentRoutes = require('./routes/payments');
 const requestRoutes = require('./routes/requests');
 const reviewRoutes = require('./routes/reviews');
 const adminRoutes = require('./routes/admin');
+const notificationRoutes = require('./routes/notification');
+const settingsRoutes = require('./routes/settings');
 
 // Middleware imports
 const errorHandler = require('./middleware/errorHandler');
@@ -131,6 +133,8 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/requests', requestRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/settings', settingsRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

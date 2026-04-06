@@ -289,7 +289,7 @@ exports.updateProfile = async (req, res, next) => {
  */
 exports.updateAddress = async (req, res, next) => {
   try {
-    const { addressId, label, street, city, state, pincode, isDefault } = req.body;
+    const { addressId, label, street, city, state, pincode, isDefault, lat, lng } = req.body;
     const user = await User.findById(req.user._id);
 
     if (!user.addresses) user.addresses = [];
@@ -312,6 +312,8 @@ exports.updateAddress = async (req, res, next) => {
          ...(city && { city }),
          ...(state && { state }),
          ...(pincode && { pincode }),
+         ...(lat !== undefined && { lat }),
+         ...(lng !== undefined && { lng }),
          ...(isDefault !== undefined && { isDefault })
       };
     } else {
@@ -327,6 +329,8 @@ exports.updateAddress = async (req, res, next) => {
         city,
         state,
         pincode,
+        lat,
+        lng,
         isDefault: shouldBeDefault,
       });
     }
