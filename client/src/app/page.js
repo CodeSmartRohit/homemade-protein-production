@@ -24,7 +24,6 @@ export default async function Home() {
 
   return (
     <>
-      <NoticeBoard />
       <HeroSection />
 
       {/* Featured Items Section */}
@@ -130,7 +129,7 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* CTA Section */}
+      {/* CTA Section and Notice Board */}
       <section className="py-24 relative overflow-hidden">
         <div className="absolute inset-0 z-0">
           <div className="absolute inset-0 bg-gradient-to-br from-amber-950 via-amber-900 to-amber-950 opacity-50"></div>
@@ -139,6 +138,7 @@ export default async function Home() {
         </div>
         
         <div className="container mx-auto px-6 md:px-12 relative z-10">
+          <NoticeBoard />
           <div className="max-w-3xl mx-auto text-center bg-amber-950/40 p-12 rounded-[2rem] border border-amber-700/30 backdrop-blur-md shadow-2xl">
             <h2 className="font-playfair text-4xl md:text-5xl font-bold text-amber-50 mb-6">
               Ready to fuel your <span className="text-amber-500 italic">potential?</span>

@@ -23,7 +23,7 @@ export default function ProfilePage() {
 
   // Address State
   const [showAddressForm, setShowAddressForm] = useState(false);
-  const [addressData, setAddressData] = useState({ type: 'Home', street: '', city: '', state: '', zipCode: '', lat: null, lng: null });
+  const [addressData, setAddressData] = useState({ label: 'Home', street: '', city: '', state: '', pincode: '', lat: null, lng: null });
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -84,7 +84,7 @@ export default function ProfilePage() {
       await updateProfile({ addresses: newAddresses });
       toast.success('Address added successfully');
       setShowAddressForm(false);
-      setAddressData({ type: 'Home', street: '', city: '', state: '', zipCode: '', lat: null, lng: null });
+      setAddressData({ label: 'Home', street: '', city: '', state: '', pincode: '', lat: null, lng: null });
     } catch (err) {
       toast.error('Failed to add address');
     } finally {
@@ -271,8 +271,8 @@ export default function ProfilePage() {
                          <div className="md:col-span-2">
                            <label className="block text-amber-100/70 text-xs mb-1">Address Label</label>
                            <select 
-                             value={addressData.type} 
-                             onChange={(e) => setAddressData({...addressData, type: e.target.value})}
+                             value={addressData.label} 
+                             onChange={(e) => setAddressData({...addressData, label: e.target.value})}
                              className="w-full bg-amber-950 border border-amber-800 rounded-lg p-3 text-amber-50 focus:border-amber-500"
                            >
                              <option value="Home">Home</option>
@@ -292,7 +292,7 @@ export default function ProfilePage() {
                            <label className="block text-amber-100/70 text-xs mb-1">State & ZIP</label>
                            <div className="flex gap-2">
                              <input type="text" required value={addressData.state} onChange={(e) => setAddressData({...addressData, state: e.target.value})} className="w-1/2 bg-amber-950 border border-amber-800 rounded-lg p-3 text-amber-50 focus:border-amber-500" placeholder="NY" />
-                             <input type="text" required value={addressData.zipCode} onChange={(e) => setAddressData({...addressData, zipCode: e.target.value})} className="w-1/2 bg-amber-950 border border-amber-800 rounded-lg p-3 text-amber-50 focus:border-amber-500" placeholder="10001" />
+                             <input type="text" required value={addressData.pincode} onChange={(e) => setAddressData({...addressData, pincode: e.target.value})} className="w-1/2 bg-amber-950 border border-amber-800 rounded-lg p-3 text-amber-50 focus:border-amber-500" placeholder="10001" />
                            </div>
                          </div>
                          <div className="md:col-span-2 mt-2">
@@ -313,14 +313,14 @@ export default function ProfilePage() {
                         user.addresses.map((addr, idx) => (
                            <div key={idx} className="bg-amber-900/10 border border-amber-800/50 rounded-2xl p-6 relative group">
                               <div className="flex justify-between items-start mb-3">
-                                 <span className="font-bold text-amber-50 border-b border-amber-500/50 pb-0.5 inline-block">{addr.type}</span>
+                                 <span className="font-bold text-amber-50 border-b border-amber-500/50 pb-0.5 inline-block">{addr.label || addr.type || 'Address'}</span>
                                  <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                    <button className="text-amber-500 hover:text-amber-400 p-1"><FiEdit2 /></button>
                                    <button onClick={() => handleDeleteAddress(idx)} className="text-red-500 hover:text-red-400 p-1"><FiTrash2 /></button>
                                  </div>
                               </div>
                               <p className="text-amber-100/70 text-sm leading-relaxed mb-1">{addr.street}</p>
-                              <p className="text-amber-100/70 text-sm leading-relaxed">{addr.city}, {addr.state} {addr.zipCode}</p>
+                              <p className="text-amber-100/70 text-sm leading-relaxed">{addr.city}, {addr.state} {addr.pincode || addr.zipCode}</p>
                            </div>
                         ))
                       ) : (

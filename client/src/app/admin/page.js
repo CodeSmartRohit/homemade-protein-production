@@ -234,6 +234,17 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleDeleteCategory = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this category?')) return;
+    try {
+      await api.delete(`/categories/${id}`);
+      toast.success('Category deleted');
+      setCategories(categories.filter(c => c._id !== id));
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to delete category');
+    }
+  };
+
   const handleCreateCategory = async (e) => {
     e.preventDefault();
     try {
@@ -741,8 +752,8 @@ export default function AdminDashboard() {
                  </div>
 
                  <div className="bg-amber-950/50 border border-amber-900 rounded-2xl p-6 shadow-xl">
-                   <h3 className="font-playfair text-xl font-bold text-amber-50 mb-4 border-b border-amber-900/50 pb-2">Add New Category</h3>
-                   <form onSubmit={handleCreateCategory} className="space-y-4">
+                   <h3 className="font-playfair text-xl font-bold text-amber-50 mb-4 border-b border-amber-900/50 pb-2">Manage Categories</h3>
+                   <form onSubmit={handleCreateCategory} className="space-y-4 border-b border-amber-900/30 pb-4 mb-4">
                      <input 
                        type="text" 
                        required 
@@ -755,6 +766,22 @@ export default function AdminDashboard() {
                        Create Category
                      </button>
                    </form>
+                   <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
+                     {categories && categories.length > 0 ? categories.map(cat => (
+                       <div key={cat._id} className="flex justify-between items-center bg-amber-900/20 px-3 py-2 rounded-lg border border-amber-900/50">
+                         <span className="text-amber-50 text-sm font-medium">{cat.name}</span>
+                         <button 
+                           onClick={() => handleDeleteCategory(cat._id)} 
+                           className="text-red-400/80 hover:text-red-400 p-1 transition-colors"
+                           title="Delete Category"
+                         >
+                           <FiTrash2 className="w-4 h-4" />
+                         </button>
+                       </div>
+                     )) : (
+                       <div className="text-xs text-amber-100/50 text-center">No categories found</div>
+                     )}
+                   </div>
                  </div>
                </div>
 

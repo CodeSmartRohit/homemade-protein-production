@@ -330,7 +330,7 @@ exports.cancelOrder = async (req, res, next) => {
         cancellationReason: reason || 'Cancelled by customer',
         status: 'cancelled',
         statusHistory: newStatusHistory
-    });
+    }, { new: true });
 
     // Emit socket event
     const io = req.app.get('io');

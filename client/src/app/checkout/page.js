@@ -417,10 +417,10 @@ export default function CheckoutPage() {
                     </div>
                     {paymentMethod === 'upi_qr' && (
                        <div className="ml-0 md:ml-12 mt-4 md:mt-0 w-full md:w-auto flex-1 bg-black/50 p-4 rounded-xl border border-amber-900/50">
-                         {settings?.upiIds?.length > 0 && (
+                         {(settings?.upiIds?.length > 0 || true) && (
                             <div className="text-xs text-amber-100 mb-2">
                                <span className="font-bold opacity-50 uppercase tracking-widest block mb-1">Our UPI IDs</span>
-                               {settings.upiIds.map(id => <div key={id} className="font-mono text-amber-500 bg-amber-950/50 px-2 py-1 rounded inline-block mr-2 mb-2">{id}</div>)}
+                               {(settings?.upiIds?.length > 0 ? settings.upiIds : ['9340623657@ybl', 'rp111monster@okicici']).map(id => <div key={id} className="font-mono text-amber-500 bg-amber-950/50 px-2 py-1 rounded inline-block mr-2 mb-2">{id}</div>)}
                             </div>
                          )}
                          {settings?.qrCodeImage && (
