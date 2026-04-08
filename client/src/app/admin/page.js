@@ -1078,7 +1078,7 @@ export default function AdminDashboard() {
                                 </span>
                              </div>
                              <div className="text-xs text-amber-100/40 flex items-center gap-3">
-                                <span>From: **{req.customer?.name}**</span>
+                                <span>From: {req.customer?.name}</span>
                                 <span className="flex items-center gap-1"><FiMail /> {req.customer?.email}</span>
                                 <span>{new Date(req.createdAt).toLocaleDateString()}</span>
                              </div>
