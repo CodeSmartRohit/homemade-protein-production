@@ -1,5 +1,6 @@
 const MenuItem = require('../models/MenuItem');
 const Category = require('../models/Category');
+const mongoose = require('mongoose');
 const path = require('path');
 const fs = require('fs');
 
@@ -30,18 +31,27 @@ exports.getAllItems = async (req, res, next) => {
 
     // Category filter
     if (category) {
-      const cat = await Category.findOne({ slug: category }).lean();
-      if (cat) query.category = cat._id;
+      if (mongoose.Types.ObjectId.isValid(category)) {
+        query.category = category;
+      } else {
+        const cat = await Category.findOne({ slug: category }).lean();
+        if (cat) query.category = cat._id;
+      }
     }
 
     // Search
     if (search) {
-      query.$text = { $search: search };
+      query.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } }
+      ];
     }
 
     // Veg filter
     if (isVeg !== undefined) {
-      query.isVeg = isVeg === 'true';
+      if (isVeg === 'true') {
+        query.dietaryPreference = 'vegetarian';
+      }
     }
 
     // Price range

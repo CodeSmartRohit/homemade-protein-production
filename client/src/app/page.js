@@ -1,18 +1,19 @@
 import HeroSection from '@/components/HeroSection';
 import ProductCard from '@/components/ProductCard';
 import Link from 'next/link';
+import { API_BASE_URL } from '@/lib/config';
 
 import NoticeBoard from '@/components/NoticeBoard';
 
 // Fetch featured items
 async function getFeaturedItems() {
   try {
-    const res = await fetch('http://localhost:5000/api/menu?limit=4&isPopular=true', { 
+    const res = await fetch(`${API_BASE_URL}/menu?limit=4&isPopular=true`, { 
       next: { revalidate: 60 } // Revalidate every minute
     });
     if (!res.ok) return [];
     const data = await res.json();
-    return data.data.items || [];
+    return data.data?.items || data.items || [];
   } catch (error) {
     console.error('Failed to fetch featured items:', error);
     return [];

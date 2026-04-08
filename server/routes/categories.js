@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Category = require('../models/Category');
+const MenuItem = require('../models/MenuItem');
 const { authenticate } = require('../middleware/auth');
 const roleCheck = require('../middleware/roleCheck');
 const { upload, setUploadDir } = require('../middleware/upload');
@@ -65,6 +66,15 @@ router.put('/:id', authenticate, roleCheck('chef', 'admin'), setUploadDir('categ
 // DELETE category (Chef/Admin)
 router.delete('/:id', authenticate, roleCheck('chef', 'admin'), async (req, res, next) => {
   try {
+    // Check if category has menu items
+    const itemCount = await MenuItem.countDocuments({ category: req.params.id });
+    if (itemCount > 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: `Cannot delete category: ${itemCount} menu item(s) are still linked to it. Please reassign or delete the items first.` 
+      });
+    }
+
     const category = await Category.findByIdAndDelete(req.params.id);
     if (!category) {
       return res.status(404).json({ success: false, message: 'Category not found.' });

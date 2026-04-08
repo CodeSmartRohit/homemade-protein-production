@@ -48,16 +48,21 @@ export default function MenuPage() {
     try {
       let queryUrl = `/menu?page=${page}&limit=12`;
       if (selectedCategory) queryUrl += `&category=${selectedCategory}`;
-      if (dietaryPref) queryUrl += `&dietaryPreference=${dietaryPref}`;
-      // Basic search logic (requires backend support or replace with exact keyword logic)
-      if (searchTerm) queryUrl += `&keyword=${encodeURIComponent(searchTerm)}`;
+      
+      // Map frontend dietary preference to backend isVeg
+      if (dietaryPref === 'vegetarian' || dietaryPref === 'vegan') {
+        queryUrl += `&isVeg=true`;
+      }
+
+      // Updated search parameter to match backend
+      if (searchTerm) queryUrl += `&search=${encodeURIComponent(searchTerm)}`;
 
       // Sort logic
       if (sortBy) {
-        if (sortBy === 'price-asc') queryUrl += '&sortBy=price&order=asc';
-        else if (sortBy === 'price-desc') queryUrl += '&sortBy=price&order=desc';
-        else if (sortBy === '-createdAt') queryUrl += '&sortBy=createdAt&order=desc';
-        else if (sortBy === 'rating') queryUrl += '&sortBy=ratings.average&order=desc';
+        if (sortBy === 'price-asc') queryUrl = `${queryUrl}&sortBy=price&order=asc`;
+        else if (sortBy === 'price-desc') queryUrl = `${queryUrl}&sortBy=price&order=desc`;
+        else if (sortBy === '-createdAt') queryUrl = `${queryUrl}&sortBy=createdAt&order=desc`;
+        else if (sortBy === 'rating') queryUrl = `${queryUrl}&sortBy=ratings.average&order=desc`;
       }
 
       const res = await api.get(queryUrl);
