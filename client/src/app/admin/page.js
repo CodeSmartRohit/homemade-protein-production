@@ -390,7 +390,7 @@ export default function AdminDashboard() {
     try {
       const payload = new FormData();
       payload.append('isPopular', !item.isPopular);
-      const res = await api.put(`/menu/${id}`, payload);
+      await api.put(`/menu/${id}`, payload);
       toast.success(item.isPopular ? 'Removed from Popular' : 'Marked as Popular');
       setMenuItems(menuItems.map(i => i._id === id ? { ...i, isPopular: !item.isPopular } : i));
     } catch (err) {
