@@ -563,7 +563,7 @@ export default function AdminDashboard() {
                              <select
                                  value={u.role}
                                  onChange={(e) => handleRoleChange(u._id, e.target.value)}
-                                 disabled={u.email === 'rp111monster@gmail.com' && u.role === 'admin'} // protect super admin
+                                 disabled={u.email === 'rp111monster@gmail.com' && u.role === 'admin'}
                                  className="bg-amber-950 border border-amber-800 text-amber-50 text-xs p-2 rounded outline-none focus:border-amber-500 disabled:opacity-50"
                              >
                                 <option value="customer">Customer</option>
@@ -987,7 +987,12 @@ export default function AdminDashboard() {
                                          {o.deliveryAddress.street}, {o.deliveryAddress.city}, {o.deliveryAddress.state} {o.deliveryAddress.pincode}
                                          {o.deliveryAddress.label && <span className="ml-1 opacity-60">({o.deliveryAddress.label})</span>}
                                          {o.deliveryAddress.lat && o.deliveryAddress.lng && (
-                                            <a href={`https://www.google.com/maps/search/?api=1&query=${o.deliveryAddress.lat},${o.deliveryAddress.lng}`} target="_blank" rel="noreferrer" className="block text-blue-400 hover:text-blue-300 mt-1 text-xs underline">
+                                            <a 
+                                              href={`https://www.google.com/maps/search/?api=1&query=${o.deliveryAddress.lat},${o.deliveryAddress.lng}`} 
+                                              target="_blank" 
+                                              rel="noreferrer" 
+                                              className="block text-blue-400 hover:text-blue-300 mt-1 text-xs underline"
+                                            >
                                                 [View on Map]
                                             </a>
                                          )}
