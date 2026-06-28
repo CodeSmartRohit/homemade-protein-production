@@ -46,7 +46,7 @@ export default function MenuPage() {
   const fetchProducts = useCallback(async () => {
     setLoading(true);
     try {
-      let queryUrl = `/menu?page=${page}&limit=12`;
+      let queryUrl = `/menu?page=${page}&limit=100`;
       if (selectedCategory) queryUrl += `&category=${selectedCategory}`;
       
       // Map frontend dietary preference to backend isVeg

@@ -211,9 +211,17 @@ server.listen(PORT, () => {
       
       // Run once on startup too
       const initialCutOffDate = new Date(Date.now() - TEN_DAYS_MS);
-      User.deleteMany({ isDeleted: true, deletedAt: { $lte: initialCutOffDate } })
-        .then(res => { if (res.deletedCount > 0) console.log(`🧹 Startup Cleanup: Permanently deleted ${res.deletedCount} users.`); })
-        .catch(err => console.error('❌ Startup Cleanup Error:', err.message));
+      const startupCleanup = async () => {
+        try {
+          const res = await User.deleteMany({ isDeleted: true, deletedAt: { $lte: initialCutOffDate } });
+          if (res && res.deletedCount > 0) {
+            console.log(`🧹 Startup Cleanup: Permanently deleted ${res.deletedCount} users.`);
+          }
+        } catch (err) {
+          console.error('❌ Startup Cleanup Error:', err.message);
+        }
+      };
+      startupCleanup();
 
     } catch (error) {
       console.error('⚠️ Background initialization failed:', error.message);

@@ -70,7 +70,11 @@ class Collection {
         // Simple select: e.g. "+password" or "-password", simplified logic
         return builder;
       },
-      then: async (resolve, reject) => {
+       lean: () => {
+         // In local DB context, lean() just returns the builder (all data is already plain JSON)
+         return builder;
+       },
+       then: async (resolve, reject) => {
         try {
           // Process populate queue here if needed, but in our manual approach
           // we'll often do this in the controller or we can implement naive populate here
@@ -227,6 +231,33 @@ class Collection {
        });
        if (!item) return this._createQueryBuilder(null, true);
        return this.findByIdAndUpdate(item._id, updateData);
+  }
+
+  async deleteMany(query = {}) {
+    const originalLength = this.data.length;
+    
+    // Use the find logic to identify what to REMOVE
+    const toKeep = this.data.filter(item => {
+      let match = true;
+      for (let key in query) {
+        if (typeof query[key] === 'object' && query[key] !== null && !Array.isArray(query[key])) {
+          if (query[key].$in && !query[key].$in.includes(item[key])) match = false;
+          if (query[key].$gte !== undefined && item[key] < query[key].$gte) match = false;
+          if (query[key].$lte !== undefined && item[key] > query[key].$lte) match = false;
+        } else if (item[key] !== query[key]) {
+          match = false;
+        }
+      }
+      return !match; // Keep items that DON'T match the delete query
+    });
+
+    const deletedCount = originalLength - toKeep.length;
+    this.data = toKeep;
+    if (deletedCount > 0) {
+      this._save();
+    }
+    
+    return { deletedCount };
   }
 }
 
