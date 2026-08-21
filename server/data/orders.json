@@ -1,0 +1,66 @@
+[
+  {
+    "_id": "a73f90af-7935-41cf-a868-83bed22f746f",
+    "createdAt": "2026-03-31T12:02:25.759Z",
+    "updatedAt": "2026-03-31T18:51:53.880Z",
+    "orderNumber": "HP-545755-131",
+    "customer": "bca6b291-3bcc-4e46-86cd-cd51a1bc51a4",
+    "items": [
+      {
+        "menuItem": "abc5fcc0-c7ec-4eda-9796-b5f4641073ef",
+        "name": "Chicken Avocado Zen",
+        "price": 389,
+        "quantity": 2,
+        "image": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&q=80"
+      },
+      {
+        "menuItem": "9980d8d3-d8df-4161-a479-9354a4fbdd0e",
+        "name": "Quinoa Green Goddess",
+        "price": 329,
+        "quantity": 1,
+        "image": "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800&q=80"
+      },
+      {
+        "menuItem": "8d8ec5b4-1d03-4a42-8ac8-3dea6bc4dd49",
+        "name": "Berry Blast Smoothie",
+        "price": 219,
+        "quantity": 1,
+        "image": "https://images.unsplash.com/photo-1553530666-ba11a7da3888?w=800&q=80"
+      },
+      {
+        "menuItem": "38cbb393-b054-442b-acc9-419012b06682",
+        "name": "Muscle Chocolate Shake",
+        "price": 249,
+        "quantity": 1,
+        "image": "https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=800&q=80"
+      }
+    ],
+    "subtotal": 1575,
+    "deliveryFee": 0,
+    "tax": 78.75,
+    "totalAmount": 1653.75,
+    "deliveryType": "pickup",
+    "specialInstructions": "",
+    "paymentMethod": "cash",
+    "paymentStatus": "pending",
+    "status": "confirmed",
+    "statusHistory": [
+      {
+        "status": "pending",
+        "note": "Order placed",
+        "date": "2026-03-31T12:02:25.755Z"
+      },
+      {
+        "status": "out_for_delivery",
+        "note": "Status updated to out_for_delivery",
+        "date": "2026-03-31T18:47:01.090Z"
+      },
+      {
+        "status": "confirmed",
+        "note": "Status updated to confirmed",
+        "date": "2026-03-31T18:51:53.880Z"
+      }
+    ],
+    "estimatedDeliveryTime": "2026-03-31T12:47:25.755Z"
+  }
+]

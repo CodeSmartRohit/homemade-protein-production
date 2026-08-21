@@ -22,7 +22,16 @@ router.get('/', async (req, res, next) => {
 router.post('/', authenticate, roleCheck('chef', 'admin'), setUploadDir('categories'), upload.single('image'), async (req, res, next) => {
   try {
     const { name, description, displayOrder } = req.body;
-    const categoryData = { name, description };
+    if (!name || !name.trim()) {
+      return res.status(400).json({ success: false, message: 'Category name is required.' });
+    }
+    const slug = req.body.slug || name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+    const categoryData = {
+      name: name.trim(),
+      slug,
+      description: description || '',
+      isActive: true
+    };
     if (displayOrder) categoryData.displayOrder = Number(displayOrder);
     if (req.file) categoryData.image = `/uploads/categories/${req.file.filename}`;
 
@@ -41,6 +50,9 @@ router.post('/', authenticate, roleCheck('chef', 'admin'), setUploadDir('categor
 router.put('/:id', authenticate, roleCheck('chef', 'admin'), setUploadDir('categories'), upload.single('image'), async (req, res, next) => {
   try {
     const updates = { ...req.body };
+    if (updates.name && !updates.slug) {
+      updates.slug = updates.name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+    }
     if (req.file) updates.image = `/uploads/categories/${req.file.filename}`;
     if (updates.displayOrder) updates.displayOrder = Number(updates.displayOrder);
 

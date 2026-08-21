@@ -22,6 +22,12 @@ class Collection {
     const raw = fs.readFileSync(this.filePath);
     try {
       this.data = JSON.parse(raw);
+      if (Array.isArray(this.data)) {
+        this.data.forEach(item => {
+          if (item.isActive === undefined) item.isActive = true;
+          if (this.name === 'menuItems' && item.isAvailable === undefined) item.isAvailable = true;
+        });
+      }
     } catch {
       this.data = [];
     }
@@ -136,7 +142,8 @@ class Collection {
                     if (item[key] > query[key].$lte) match = false;
                 }
             } else {
-                if (item[key] !== query[key]) match = false;
+                const itemVal = item[key] !== undefined ? item[key] : ((key === 'isActive' || key === 'isAvailable') ? true : undefined);
+                if (itemVal !== query[key]) match = false;
             }
         }
         return match;
@@ -178,12 +185,17 @@ class Collection {
   async create(data) {
     const isArrayContext = Array.isArray(data);
     const items = isArrayContext ? data : [data];
-    const created = items.map(d => ({
-      _id: uuidv4(),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      ...d
-    }));
+    const created = items.map(d => {
+      const itemData = {
+        _id: uuidv4(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        ...d
+      };
+      if (itemData.isActive === undefined) itemData.isActive = true;
+      if (this.name === 'menuItems' && itemData.isAvailable === undefined) itemData.isAvailable = true;
+      return itemData;
+    });
     this.data.push(...created);
     this._save();
     

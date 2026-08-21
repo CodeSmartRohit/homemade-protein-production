@@ -1,0 +1,27 @@
+[
+  {
+    "_id": "9e83301d-41dd-4a16-afd8-6ede35263988",
+    "createdAt": "2026-04-01T17:48:19.430Z",
+    "updatedAt": "2026-06-28T05:56:04.669Z",
+    "name": "Chef Rohit",
+    "email": "chef@gmail.com",
+    "password": "$2a$12$XL6.wEf3QJcMs5ctR29g4.y/9jbG.I4GERog1RNe8DnB73xA0wcwC",
+    "phone": "9340623657",
+    "role": "chef",
+    "isVerified": true,
+    "isActive": true
+  },
+  {
+    "_id": "cd676afd-b51d-4095-8ce0-7f833b813457",
+    "createdAt": "2026-04-01T17:48:20.029Z",
+    "updatedAt": "2026-06-28T05:57:40.147Z",
+    "name": "Admin",
+    "email": "rp111monster@gmail.com",
+    "password": "$2a$12$wJOYMUUeyuI/kbuv4rDRIuKmHtNunhVJ2EOXUKS8yRKMh2jDvB5YG",
+    "phone": "9340623657",
+    "role": "admin",
+    "isVerified": true,
+    "isActive": true,
+    "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJjZDY3NmFmZC1iNTFkLTQwOTUtOGNlMC03ZjgzM2I4MTM0NTciLCJpYXQiOjE3ODI2MjYyNjAsImV4cCI6MTc4MzIzMTA2MH0.Kl92V44c39THUFphyCjdHnGXWp2LI08z-GSiCTD1aNE"
+  }
+]

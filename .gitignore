@@ -30,7 +30,7 @@ Thumbs.db
 *.rar
 
 # Project Specific
-server/data/*.json
+# server/data/*.json
 !server/data/.gitkeep
 client/dev_log.txt
 server/out.txt

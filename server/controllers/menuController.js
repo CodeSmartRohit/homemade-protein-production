@@ -352,7 +352,7 @@ exports.toggleAvailability = async (req, res, next) => {
  */
 exports.getAllItemsAdmin = async (req, res, next) => {
   try {
-    const { page = 1, limit = 20, category, search } = req.query;
+    const { page = 1, limit = 100, category, search } = req.query;
     const query = {};
 
     if (category) query.category = category;

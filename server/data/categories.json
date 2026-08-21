@@ -1,0 +1,122 @@
+[
+  {
+    "_id": "dade60be-d4be-48a4-a93f-ebf7425677e8",
+    "createdAt": "2026-03-31T10:30:56.317Z",
+    "updatedAt": "2026-03-31T10:30:56.330Z",
+    "name": "Shakes",
+    "slug": "shakes",
+    "icon": "FiCoffee",
+    "isActive": true,
+    "displayOrder": 1
+  },
+  {
+    "_id": "87e20046-918b-4ee2-9481-547edc69da41",
+    "createdAt": "2026-03-31T10:30:56.363Z",
+    "updatedAt": "2026-03-31T10:30:56.363Z",
+    "name": "Salads",
+    "slug": "salads",
+    "icon": "FiCloud",
+    "isActive": true,
+    "displayOrder": 2
+  },
+  {
+    "_id": "3595db6a-c2c1-4cf8-ad7a-86142f560a57",
+    "createdAt": "2026-03-31T10:30:56.365Z",
+    "updatedAt": "2026-03-31T10:30:56.365Z",
+    "name": "Yogurt",
+    "slug": "yogurt",
+    "icon": "FiWind",
+    "isActive": true,
+    "displayOrder": 3
+  },
+  {
+    "_id": "d13d3a3d-187e-49c8-9f95-555ba54db63c",
+    "createdAt": "2026-03-31T10:30:56.366Z",
+    "updatedAt": "2026-03-31T10:30:56.366Z",
+    "name": "Burgers",
+    "slug": "burgers",
+    "icon": "FiCircle",
+    "isActive": true,
+    "displayOrder": 4
+  },
+  {
+    "_id": "a097344b-79d7-4aa2-8c7b-bca0cfa111e4",
+    "createdAt": "2026-03-31T10:30:56.369Z",
+    "updatedAt": "2026-03-31T10:30:56.369Z",
+    "name": "Pizzas",
+    "slug": "pizzas",
+    "icon": "FiDisc",
+    "isActive": true,
+    "displayOrder": 5
+  },
+  {
+    "_id": "261858ed-cb31-46b9-b6f5-7c9d20686198",
+    "createdAt": "2026-03-31T10:30:56.373Z",
+    "updatedAt": "2026-03-31T10:30:56.373Z",
+    "name": "Wraps",
+    "slug": "wraps",
+    "icon": "FiLayers",
+    "isActive": true,
+    "displayOrder": 6
+  },
+  {
+    "_id": "f50d0b89-7272-4696-a067-a03a18e74474",
+    "createdAt": "2026-03-31T10:30:56.374Z",
+    "updatedAt": "2026-03-31T10:30:56.374Z",
+    "name": "Desserts",
+    "slug": "desserts",
+    "icon": "FiSun",
+    "isActive": true,
+    "displayOrder": 7
+  },
+  {
+    "_id": "60b5d513-49ea-4963-8e8b-60c9643083b5",
+    "createdAt": "2026-03-31T10:30:56.376Z",
+    "updatedAt": "2026-03-31T10:30:56.376Z",
+    "name": "Beverages",
+    "slug": "beverages",
+    "icon": "FiDroplet",
+    "isActive": true,
+    "displayOrder": 8
+  },
+  {
+    "_id": "7a1e9482-12ef-4d81-8b20-990a88112233",
+    "createdAt": "2026-08-21T10:00:00.000Z",
+    "updatedAt": "2026-08-21T10:00:00.000Z",
+    "name": "Protein Bowls",
+    "slug": "protein-bowls",
+    "icon": "FiPackage",
+    "isActive": true,
+    "displayOrder": 9
+  },
+  {
+    "_id": "8b2f0593-23fa-4e92-9c31-aa1b99223344",
+    "createdAt": "2026-08-21T10:00:00.000Z",
+    "updatedAt": "2026-08-21T10:00:00.000Z",
+    "name": "Meal Prep",
+    "slug": "meal-prep",
+    "icon": "FiGrid",
+    "isActive": true,
+    "displayOrder": 10
+  },
+  {
+    "_id": "9c3a1604-34ab-4f03-ad42-bb2c00334455",
+    "createdAt": "2026-08-21T10:00:00.000Z",
+    "updatedAt": "2026-08-21T10:00:00.000Z",
+    "name": "Protein Bars",
+    "slug": "protein-bars",
+    "icon": "FiZap",
+    "isActive": true,
+    "displayOrder": 11
+  },
+  {
+    "_id": "0d4b2715-45bc-4a14-be53-cc3d11445566",
+    "createdAt": "2026-08-21T10:00:00.000Z",
+    "updatedAt": "2026-08-21T10:00:00.000Z",
+    "name": "Special Items",
+    "slug": "special-items",
+    "icon": "FiStar",
+    "isActive": true,
+    "displayOrder": 12
+  }
+]
