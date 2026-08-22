@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "HOMEMADE Protein - Food Ordering Platform",
   "main": "server/server.js",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
     "start": "node server/server.js",
     "build": "echo 'No build step needed'",
