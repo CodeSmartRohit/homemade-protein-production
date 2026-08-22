@@ -3,7 +3,10 @@ const router = express.Router();
 const notificationController = require('../controllers/notificationController');
 const { authenticate } = require('../middleware/auth');
 
-// All notification routes require authentication
+// Public diagnostic test route
+router.get('/test-alert', notificationController.testAlert);
+
+// All other notification routes require authentication
 router.use(authenticate);
 
 router.get('/', notificationController.getMyNotifications);

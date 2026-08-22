@@ -57,6 +57,28 @@ exports.markAllAsRead = async (req, res, next) => {
       success: true,
       message: 'All notifications marked as read.'
     });
+/**
+ * GET /api/notifications/test-alert — Trigger diagnostic notification test
+ */
+exports.testAlert = async (req, res, next) => {
+  try {
+    const notificationService = require('../utils/notificationService');
+    const result = await notificationService.testNotifications();
+
+    res.json({
+      success: true,
+      message: 'Notification Diagnostic Test Executed',
+      targetPhone: process.env.ADMIN_PHONE || '9340623657',
+      targetEmail: process.env.ADMIN_EMAIL || 'rp111monster@gmail.com',
+      diagnostics: result,
+      environment: {
+        hasEmailUser: Boolean(process.env.EMAIL_USER),
+        hasEmailPass: Boolean(process.env.EMAIL_PASS),
+        hasCallMeBotKey: Boolean(process.env.CALLMEBOT_API_KEY),
+        hasTwilioSid: Boolean(process.env.TWILIO_ACCOUNT_SID),
+        hasWebhookUrl: Boolean(process.env.WHATSAPP_WEBHOOK_URL)
+      }
+    });
   } catch (error) {
     next(error);
   }

@@ -72,7 +72,7 @@ function createTransporter() {
 
 /**
  * Send WhatsApp notification to Admin
- * Supports: CallMeBot (free), Twilio, or custom webhook
+ * Returns { success: boolean, provider: string, detail: string }
  */
 async function sendWhatsAppNotification(messageText) {
   try {
@@ -82,9 +82,13 @@ async function sendWhatsAppNotification(messageText) {
     if (process.env.CALLMEBOT_API_KEY) {
       const encodedMsg = encodeURIComponent(messageText);
       const url = `https://api.callmebot.com/whatsapp.php?phone=+91${rawPhone}&text=${encodedMsg}&apikey=${process.env.CALLMEBOT_API_KEY}`;
-      await httpRequest(url);
-      console.log(`✅ WhatsApp Notification sent to ${ADMIN_PHONE} via CallMeBot`);
-      return true;
+      const res = await httpRequest(url);
+      console.log(`✅ WhatsApp Notification sent to ${ADMIN_PHONE} via CallMeBot (Status: ${res.status})`);
+      return {
+        success: true,
+        provider: 'CallMeBot',
+        detail: `Sent to +91${rawPhone} (HTTP ${res.status})`
+      };
     }
 
     // Option 2: Twilio WhatsApp API
@@ -96,7 +100,7 @@ async function sendWhatsAppNotification(messageText) {
       params.append('To', `whatsapp:+91${rawPhone}`);
       params.append('Body', messageText);
 
-      await httpRequest(twilioUrl, {
+      const res = await httpRequest(twilioUrl, {
         method: 'POST',
         headers: {
           'Authorization': `Basic ${auth}`,
@@ -105,62 +109,93 @@ async function sendWhatsAppNotification(messageText) {
         body: params.toString()
       });
       console.log(`✅ WhatsApp Notification sent to ${ADMIN_PHONE} via Twilio`);
-      return true;
+      return {
+        success: true,
+        provider: 'Twilio',
+        detail: `Sent to +91${rawPhone} (HTTP ${res.status})`
+      };
     }
 
     // Option 3: Custom Webhook API (UltraMsg / GreenAPI / any webhook)
     if (process.env.WHATSAPP_WEBHOOK_URL) {
       const body = JSON.stringify({ phone: ADMIN_PHONE, message: messageText });
-      await httpRequest(process.env.WHATSAPP_WEBHOOK_URL, {
+      const res = await httpRequest(process.env.WHATSAPP_WEBHOOK_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body
       });
       console.log(`✅ WhatsApp Notification sent to ${ADMIN_PHONE} via Custom Webhook`);
-      return true;
+      return {
+        success: true,
+        provider: 'Custom Webhook',
+        detail: `Sent to +91${rawPhone} (HTTP ${res.status})`
+      };
     }
 
-    // Fallback: Console log (no API key configured)
+    // Missing credentials warning
+    const reason = `CALLMEBOT_API_KEY missing. To enable instant WhatsApp alerts to ${ADMIN_PHONE}: Send 'I allow callmebot to send me messages' on WhatsApp to +34 644 51 95 23 to get your free API key, then add CALLMEBOT_API_KEY on Render/Vercel.`;
     console.log(`\n========================================`);
-    console.log(`📱 [WHATSAPP NOTIFICATION] -> Admin Phone: ${ADMIN_PHONE}`);
-    console.log(`----------------------------------------`);
-    console.log(messageText);
+    console.log(`⚠️ [WHATSAPP NOTIFICATION PENDING CONFIGURATION]`);
+    console.log(`Target Phone: ${ADMIN_PHONE}`);
+    console.log(reason);
     console.log(`========================================\n`);
-    return false;
+
+    return {
+      success: false,
+      provider: 'None (Unconfigured)',
+      detail: reason
+    };
   } catch (err) {
     console.error('❌ Failed to send WhatsApp notification:', err.message);
-    return false;
+    return {
+      success: false,
+      provider: 'Error',
+      detail: err.message
+    };
   }
 }
 
 /**
  * Send Gmail / Email Notification to Admin
+ * Returns { success: boolean, provider: string, detail: string }
  */
 async function sendEmailNotification(subject, htmlBody) {
   try {
     const transporter = createTransporter();
     if (transporter) {
-      await transporter.sendMail({
+      const info = await transporter.sendMail({
         from: `"HOMEMADE Protein Alerts" <${process.env.EMAIL_USER || process.env.SMTP_USER}>`,
         to: ADMIN_EMAIL,
         subject: subject,
         html: htmlBody,
       });
-      console.log(`✅ Email Notification sent to ${ADMIN_EMAIL}`);
-      return true;
+      console.log(`✅ Email Notification sent to ${ADMIN_EMAIL} (MessageID: ${info.messageId})`);
+      return {
+        success: true,
+        provider: 'Nodemailer SMTP',
+        detail: `Email sent to ${ADMIN_EMAIL} (MessageID: ${info.messageId})`
+      };
     }
 
-    // Fallback: Console log (no email credentials configured)
+    const reason = `EMAIL_USER / EMAIL_PASS missing. To enable Gmail alerts to ${ADMIN_EMAIL}: Generate a 16-character App Password at https://myaccount.google.com/apppasswords and add EMAIL_USER and EMAIL_PASS environment variables on Render/Vercel.`;
     console.log(`\n========================================`);
-    console.log(`📧 [EMAIL NOTIFICATION] -> Admin Email: ${ADMIN_EMAIL}`);
-    console.log(`[SUBJECT]: ${subject}`);
-    console.log(`----------------------------------------`);
-    console.log(`HTML Email Ready (configure EMAIL_USER + EMAIL_PASS to send)`);
+    console.log(`⚠️ [EMAIL NOTIFICATION PENDING CONFIGURATION]`);
+    console.log(`Target Email: ${ADMIN_EMAIL}`);
+    console.log(reason);
     console.log(`========================================\n`);
-    return false;
+
+    return {
+      success: false,
+      provider: 'None (Unconfigured)',
+      detail: reason
+    };
   } catch (err) {
     console.error('❌ Failed to send Email notification:', err.message);
-    return false;
+    return {
+      success: false,
+      provider: 'Error',
+      detail: err.message
+    };
   }
 }
 
@@ -257,13 +292,18 @@ Log in to your Admin Dashboard to manage this order!`;
       </div>
     `;
 
-    // Fire both notifications concurrently (non-blocking)
-    await Promise.allSettled([
+    const results = await Promise.allSettled([
       sendWhatsAppNotification(whatsappMsg),
       sendEmailNotification(emailSubject, emailHtml)
     ]);
+
+    return {
+      whatsapp: results[0].status === 'fulfilled' ? results[0].value : { success: false, detail: results[0].reason?.message },
+      email: results[1].status === 'fulfilled' ? results[1].value : { success: false, detail: results[1].reason?.message }
+    };
   } catch (err) {
     console.error('❌ Error in notifyNewOrder:', err.message);
+    return { error: err.message };
   }
 };
 
@@ -341,12 +381,33 @@ Review and accept this request on your Admin/Chef dashboard!`;
       </div>
     `;
 
-    // Fire both notifications concurrently (non-blocking)
-    await Promise.allSettled([
+    const results = await Promise.allSettled([
       sendWhatsAppNotification(whatsappMsg),
       sendEmailNotification(emailSubject, emailHtml)
     ]);
+
+    return {
+      whatsapp: results[0].status === 'fulfilled' ? results[0].value : { success: false, detail: results[0].reason?.message },
+      email: results[1].status === 'fulfilled' ? results[1].value : { success: false, detail: results[1].reason?.message }
+    };
   } catch (err) {
     console.error('❌ Error in notifyNewRequest:', err.message);
+    return { error: err.message };
   }
+};
+
+/**
+ * Diagnostic method to test notifications manually
+ */
+exports.testNotifications = async () => {
+  const mockOrder = {
+    orderNumber: "TEST-ALERT",
+    totalAmount: 499,
+    customer: { name: "Rohit Parmar (Admin)", phone: ADMIN_PHONE },
+    items: [{ name: "High Protein Chicken Rice", quantity: 2, price: 249.50 }],
+    paymentMethod: "COD",
+    deliveryType: "Delivery"
+  };
+
+  return await exports.notifyNewOrder(mockOrder);
 };
