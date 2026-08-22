@@ -99,59 +99,64 @@ export default function MyOrdersPage() {
         </div>
       ) : (
         <div className="grid gap-6">
-          {orders.map((order) => (
-            <div key={order._id} className="bg-amber-950/40 border border-amber-900/60 rounded-2xl p-6 md:p-8 backdrop-blur shadow-lg hover:shadow-amber-900/20 transition-all flex flex-col md:flex-row justify-between gap-6 relative overflow-hidden group">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full blur-2xl group-hover:bg-amber-500/10 transition-colors pointer-events-none"></div>
+          {orders.map((order) => {
+            const orderDate = order.createdAt && !isNaN(new Date(order.createdAt).getTime()) ? new Date(order.createdAt) : null;
+            const items = Array.isArray(order.items) ? order.items : [];
 
-              <div className="flex-1">
-                <div className="flex flex-wrap items-center gap-4 mb-4">
-                  <h3 className="font-playfair font-bold text-xl text-amber-50">
-                    Order #{order.orderNumber}
-                  </h3>
-                  <div className={`flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-bold uppercase tracking-wider ${getStatusColor(order.status)}`}>
-                    {STATUS_ICONS[order.status]} 
-                    {order.status}
+            return (
+              <div key={order._id} className="bg-amber-950/40 border border-amber-900/60 rounded-2xl p-6 md:p-8 backdrop-blur shadow-lg hover:shadow-amber-900/20 transition-all flex flex-col md:flex-row justify-between gap-6 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full blur-2xl group-hover:bg-amber-500/10 transition-colors pointer-events-none"></div>
+
+                <div className="flex-1">
+                  <div className="flex flex-wrap items-center gap-4 mb-4">
+                    <h3 className="font-playfair font-bold text-xl text-amber-50">
+                      Order #{order.orderNumber || order._id?.slice(-6)}
+                    </h3>
+                    <div className={`flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-bold uppercase tracking-wider ${getStatusColor(order.status)}`}>
+                      {STATUS_ICONS[order.status]} 
+                      {order.status}
+                    </div>
+                  </div>
+
+                  <p className="text-sm text-amber-100/50 mb-4 flex items-center">
+                    <FiClock className="mr-2" /> 
+                    Placed {orderDate ? `on ${orderDate.toLocaleDateString()} at ${orderDate.toLocaleTimeString([], { hour: '2-digit', minute:'2-digit' })}` : ''}
+                  </p>
+
+                  <div className="text-amber-100/80 mb-6 max-w-xl">
+                    {items.map(item => `${item.quantity || 1}x ${item.name || item.menuItem?.name || 'Item'}`).join(', ')}
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-4">
+                    <Link 
+                      href={`/orders/${order._id}`}
+                      className="bg-amber-500 text-amber-950 font-bold px-6 py-2 rounded-full hover:bg-amber-400 transition-colors text-sm shadow-[0_4px_10px_rgba(245,158,11,0.2)]"
+                    >
+                      View Details
+                    </Link>
+
+                    {(order.status === 'pending' || order.status === 'confirmed') && (
+                      <button 
+                        onClick={() => cancelOrder(order._id)}
+                        className="text-red-400 hover:text-red-300 font-medium text-sm border border-red-900/50 hover:bg-red-900/20 px-6 py-2 rounded-full transition-colors"
+                      >
+                        Cancel Order
+                      </button>
+                    )}
                   </div>
                 </div>
 
-                <p className="text-sm text-amber-100/50 mb-4 flex items-center">
-                  <FiClock className="mr-2" /> 
-                  Placed on {new Date(order.createdAt).toLocaleDateString()} at {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute:'2-digit' })}
-                </p>
-
-                <div className="text-amber-100/80 mb-6 max-w-xl">
-                  {order.items.map(item => `${item.quantity}x ${item.menuItem?.name || 'Item'}`).join(', ')}
-                </div>
-
-                <div className="flex flex-wrap items-center gap-4">
-                  <Link 
-                    href={`/orders/${order._id}`}
-                    className="bg-amber-500 text-amber-950 font-bold px-6 py-2 rounded-full hover:bg-amber-400 transition-colors text-sm shadow-[0_4px_10px_rgba(245,158,11,0.2)]"
-                  >
-                    View Details
-                  </Link>
-
-                  {(order.status === 'pending' || order.status === 'confirmed') && (
-                    <button 
-                      onClick={() => cancelOrder(order._id)}
-                      className="text-red-400 hover:text-red-300 font-medium text-sm border border-red-900/50 hover:bg-red-900/20 px-6 py-2 rounded-full transition-colors"
-                    >
-                      Cancel Order
-                    </button>
-                  )}
+                <div className="md:border-l md:border-amber-900/50 md:pl-8 flex flex-col justify-center items-start md:items-end min-w-[200px]">
+                  <div className="text-amber-100/50 text-sm mb-1 uppercase tracking-wider font-bold">Total Amount</div>
+                  <div className="font-playfair text-3xl font-bold text-amber-50">₹{Number(order.totalAmount || 0).toFixed(2)}</div>
+                  <div className="text-amber-100/70 text-sm mt-3 flex items-center bg-amber-950 px-3 py-1.5 rounded-lg border border-amber-900/50">
+                    <div className={`w-2 h-2 rounded-full mr-2 ${order.paymentStatus === 'paid' ? 'bg-green-500' : 'bg-amber-500'}`}></div>
+                    Payment: <span className="font-bold ml-1 uppercase">{order.paymentStatus || 'Pending'}</span>
+                  </div>
                 </div>
               </div>
-
-              <div className="md:border-l md:border-amber-900/50 md:pl-8 flex flex-col justify-center items-start md:items-end min-w-[200px]">
-                <div className="text-amber-100/50 text-sm mb-1 uppercase tracking-wider font-bold">Total Amount</div>
-                <div className="font-playfair text-3xl font-bold text-amber-50">₹{order.totalAmount?.toFixed(2)}</div>
-                <div className="text-amber-100/70 text-sm mt-3 flex items-center bg-amber-950 px-3 py-1.5 rounded-lg border border-amber-900/50">
-                  <div className={`w-2 h-2 rounded-full mr-2 ${order.paymentStatus === 'paid' ? 'bg-green-500' : 'bg-amber-500'}`}></div>
-                  Payment: <span className="font-bold ml-1 uppercase">{order.paymentStatus}</span>
-                </div>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

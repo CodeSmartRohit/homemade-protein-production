@@ -15,7 +15,9 @@ export default function OrderStatusTracker({ status, createdAt }) {
   const isDelivered = status === 'delivered';
 
   // Calculate generic Estimated Delivery Time (45 mins from order creation)
-  const estimatedDelivery = createdAt ? new Date(new Date(createdAt).getTime() + 45 * 60000) : null;
+  const estimatedDelivery = (createdAt && !isNaN(new Date(createdAt).getTime())) 
+    ? new Date(new Date(createdAt).getTime() + 45 * 60000) 
+    : null;
 
 
   if (isCancelled) {

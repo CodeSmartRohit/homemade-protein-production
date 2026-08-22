@@ -11,7 +11,8 @@ import { FiArrowLeft, FiMapPin, FiCreditCard, FiAlertCircle, FiMessageSquare } f
 import toast from 'react-hot-toast';
 
 export default function OrderDetailPage({ params }) {
-  const { id } = use(params);
+  const resolvedParams = params && typeof params.then === 'function' ? use(params) : params;
+  const id = resolvedParams?.id;
   const { isAuthenticated, loading: authLoading } = useAuth();
   const router = useRouter();
   const [order, setOrder] = useState(null);
@@ -19,7 +20,7 @@ export default function OrderDetailPage({ params }) {
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
-      router.push('/auth/login?redirect=/orders/' + id);
+      router.push('/auth/login?redirect=/orders/' + (id || ''));
       return;
     }
 
@@ -104,7 +105,7 @@ export default function OrderDetailPage({ params }) {
         amount: amount.toString(),
         currency,
         name: 'HOMEMADE Protein',
-        description: `Order #${order.orderNumber}`,
+        description: `Order #${order.orderNumber || order._id}`,
         order_id: razorpayOrderId,
         handler: async function (response) {
           try {
@@ -147,9 +148,17 @@ export default function OrderDetailPage({ params }) {
 
   if (!order) return null;
 
+  const orderDate = order.createdAt && !isNaN(new Date(order.createdAt).getTime()) ? new Date(order.createdAt) : null;
+  const isRecentOrder = orderDate ? (new Date() - orderDate < 5 * 60 * 1000) : false;
+  const orderItems = Array.isArray(order.items) ? order.items : [];
+  const totalNumber = Number(order.totalAmount || 0);
+  const deliveryFeeNumber = Number(order.deliveryFee || 0);
+  const taxNumber = Number(order.tax || 0);
+  const subtotalNumber = order.subtotal !== undefined ? Number(order.subtotal) : (totalNumber - deliveryFeeNumber - taxNumber);
+
   return (
     <div className="container mx-auto px-6 md:px-12 py-12 min-h-screen animate-fade-in">
-      {(order.status === 'confirmed' || order.status === 'pending') && (new Date() - new Date(order.createdAt) < 5 * 60 * 1000) && (
+      {(order.status === 'confirmed' || order.status === 'pending') && isRecentOrder && (
         <div className="bg-emerald-900/30 border border-emerald-500/50 rounded-2xl p-6 mb-8 flex items-center gap-6 text-emerald-400 font-playfair shadow-[0_0_40px_rgba(16,185,129,0.1)] transition-all">
           <div className="bg-emerald-500/20 p-3 rounded-full border border-emerald-500/30">
             <FiCheckCircle className="w-8 h-8 flex-shrink-0 animate-pulse text-emerald-300" />
@@ -172,10 +181,10 @@ export default function OrderDetailPage({ params }) {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
         <div>
           <h1 className="font-playfair text-3xl md:text-5xl font-bold text-amber-50 mb-2">
-            Order <span className="text-amber-500">#{order.orderNumber}</span>
+            Order <span className="text-amber-500">#{order.orderNumber || order._id?.slice(-6)}</span>
           </h1>
           <p className="text-amber-100/60">
-            Placed on {new Date(order.createdAt).toLocaleDateString()} at {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute:'2-digit' })}
+            Placed {orderDate ? `on ${orderDate.toLocaleDateString()} at ${orderDate.toLocaleTimeString([], { hour: '2-digit', minute:'2-digit' })}` : ''}
           </p>
         </div>
         
@@ -212,36 +221,43 @@ export default function OrderDetailPage({ params }) {
             </h2>
             
             <ul className="divide-y divide-amber-900/50">
-              {order.items.map((item, idx) => (
-                <li key={idx} className="py-6 flex flex-col sm:flex-row gap-6">
-                  <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-xl bg-amber-900/30 border border-amber-800/50 overflow-hidden relative flex-shrink-0">
-                    {item.menuItem?.image ? (
-                      <Image src={item.menuItem.image} fill className="object-cover" alt={item.menuItem.name} />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-amber-900/50">
-                        No Image
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="flex-1 flex flex-col justify-between">
-                    <div>
-                      <h4 className="font-playfair font-bold text-xl text-amber-50 mb-1">{item.menuItem?.name || 'Unknown Item'}</h4>
-                      <span className="text-sm bg-amber-900/40 text-amber-400 px-2 py-0.5 rounded border border-amber-800/50">Food Item</span>
+              {orderItems.map((item, idx) => {
+                const itemPrice = Number(item.price || item.menuItem?.price || 0);
+                const itemQty = Number(item.quantity || 1);
+                const itemImage = item.image || item.menuItem?.image;
+                const itemName = item.name || item.menuItem?.name || 'Food Item';
+
+                return (
+                  <li key={idx} className="py-6 flex flex-col sm:flex-row gap-6">
+                    <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-xl bg-amber-900/30 border border-amber-800/50 overflow-hidden relative flex-shrink-0">
+                      {itemImage ? (
+                        <Image src={itemImage} fill className="object-cover" alt={itemName} />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-amber-900/50">
+                          No Image
+                        </div>
+                      )}
                     </div>
                     
-                    <div className="flex justify-between items-end mt-4">
-                      <div className="text-amber-100/70">
-                        <span className="text-sm">Quantity:</span> <span className="font-bold text-lg text-amber-50">{item.quantity}</span>
+                    <div className="flex-1 flex flex-col justify-between">
+                      <div>
+                        <h4 className="font-playfair font-bold text-xl text-amber-50 mb-1">{itemName}</h4>
+                        <span className="text-sm bg-amber-900/40 text-amber-400 px-2 py-0.5 rounded border border-amber-800/50">Food Item</span>
                       </div>
-                      <div className="text-right">
-                        <div className="text-sm text-amber-100/50 line-through mb-1">₹{(item.price * item.quantity + item.price * 0.2).toFixed(2)}</div>
-                        <div className="font-playfair text-2xl font-bold text-amber-400">₹{(item.price * item.quantity).toFixed(2)}</div>
+                      
+                      <div className="flex justify-between items-end mt-4">
+                        <div className="text-amber-100/70">
+                          <span className="text-sm">Quantity:</span> <span className="font-bold text-lg text-amber-50">{itemQty}</span>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-sm text-amber-100/50 line-through mb-1">₹{(itemPrice * itemQty * 1.2).toFixed(2)}</div>
+                          <div className="font-playfair text-2xl font-bold text-amber-400">₹{(itemPrice * itemQty).toFixed(2)}</div>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </li>
-              ))}
+                  </li>
+                );
+              })}
             </ul>
           </div>
 
@@ -266,22 +282,22 @@ export default function OrderDetailPage({ params }) {
             
             <div className="space-y-4 mb-6">
               <div className="flex justify-between text-sm text-amber-100/80">
-                  <p>Subtotal ({order.items.reduce((acc, i) => acc + i.quantity, 0)} items)</p>
-                  <p className="font-medium">₹{order.totalAmount - (order.deliveryFee || 0) - (order.tax || 0)}</p>
+                  <p>Subtotal ({orderItems.reduce((acc, i) => acc + Number(i.quantity || 1), 0)} items)</p>
+                  <p className="font-medium">₹{subtotalNumber.toFixed(2)}</p>
               </div>
               <div className="flex justify-between text-sm text-amber-100/80">
                   <p>Delivery Fee</p>
-                  <p className="font-medium">₹{order.deliveryFee || 0}</p>
+                  <p className="font-medium">₹{deliveryFeeNumber.toFixed(2)}</p>
               </div>
               <div className="flex justify-between text-sm text-amber-100/80">
                   <p>Taxes</p>
-                  <p className="font-medium">₹{order.tax || 0}</p>
+                  <p className="font-medium">₹{taxNumber.toFixed(2)}</p>
               </div>
             </div>
             
             <div className="flex justify-between text-2xl font-bold font-playfair text-amber-400 pt-4 border-t border-amber-900/50">
               <p>Total</p>
-              <p>₹{order.totalAmount?.toFixed(2)}</p>
+              <p>₹{totalNumber.toFixed(2)}</p>
             </div>
           </div>
 
@@ -293,9 +309,9 @@ export default function OrderDetailPage({ params }) {
                </h3>
                {order.deliveryType === 'delivery' && order.deliveryAddress ? (
                  <div className="text-amber-100/80 bg-amber-900/20 p-4 rounded-xl border border-amber-900/50">
-                   <p className="font-bold text-amber-50 mb-1 border-b border-amber-900/50 pb-1">{order.deliveryAddress.type || 'Address'}</p>
+                   <p className="font-bold text-amber-50 mb-1 border-b border-amber-900/50 pb-1">{order.deliveryAddress.type || order.deliveryAddress.label || 'Address'}</p>
                    <p>{order.deliveryAddress.street}</p>
-                   <p>{order.deliveryAddress.city}, {order.deliveryAddress.state} {order.deliveryAddress.zipCode}</p>
+                   <p>{order.deliveryAddress.city}, {order.deliveryAddress.state} {order.deliveryAddress.pincode || order.deliveryAddress.zipCode || ''}</p>
                  </div>
                ) : (
                  <div className="text-amber-100/80 bg-amber-900/20 p-4 rounded-xl border border-amber-900/50">
@@ -314,13 +330,13 @@ export default function OrderDetailPage({ params }) {
                <div className="bg-amber-900/20 p-4 rounded-xl border border-amber-900/50 flex flex-col gap-2">
                  <div className="flex justify-between text-sm">
                    <span className="text-amber-100/60">Method:</span>
-                   <span className="font-bold text-amber-50 uppercase">{order.paymentMethod}</span>
+                   <span className="font-bold text-amber-50 uppercase">{order.paymentMethod || 'COD'}</span>
                  </div>
                  <div className="flex justify-between text-sm">
                    <span className="text-amber-100/60">Status:</span>
                    <div className="flex items-center gap-2">
                      <span className={`w-2 h-2 rounded-full ${order.paymentStatus === 'paid' ? 'bg-green-500' : 'bg-amber-500'}`}></span>
-                     <span className="font-bold uppercase text-amber-50">{order.paymentStatus}</span>
+                     <span className="font-bold uppercase text-amber-50">{order.paymentStatus || 'Pending'}</span>
                    </div>
                  </div>
                  {order.razorpayPaymentId && (
