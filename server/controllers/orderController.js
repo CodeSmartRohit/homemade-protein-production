@@ -1,5 +1,6 @@
 const Order = require('../models/Order');
 const MenuItem = require('../models/MenuItem');
+const notificationService = require('../utils/notificationService');
 
 // Helper to generate order number
 const generateOrderNumber = () => {
@@ -104,13 +105,10 @@ exports.createOrder = async (req, res, next) => {
       });
     }
 
-    // --- SMS Notification Mock (Fast2SMS / Twilio) ---
-    // In a real production setup, insert API call to Fast2SMS here.
-    // e.g. axios.post('https://www.fast2sms.com/dev/bulkV2', { ... })
-    const ADMIN_PHONE = '9340623657';
-    console.log(`\n\n[SMS GATEWAY MOCK] -> Sending SMS to Admin at ${ADMIN_PHONE}`);
-    console.log(`[SMS CONTENT] -> New Order #${populatedOrder.orderNumber} received! Value: ₹${populatedOrder.totalAmount}. Please prepare food.`);
-    console.log(`[SMS GATEWAY MOCK] -> SMS delivered successfully to ${ADMIN_PHONE}!\n\n`);
+    // --- Send WhatsApp + Email Notifications to Admin ---
+    notificationService.notifyNewOrder(populatedOrder).catch(err =>
+      console.error('Notification dispatch error:', err.message)
+    );
 
     res.status(201).json({
       success: true,

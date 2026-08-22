@@ -1,4 +1,5 @@
 const CustomRequest = require('../models/CustomRequest');
+const notificationService = require('../utils/notificationService');
 
 /**
  * POST /api/requests — Submit custom dish request (Customer)
@@ -28,11 +29,16 @@ exports.createRequest = async (req, res, next) => {
 
     const populatedRequest = await CustomRequest.findById(request._id).populate('customer', 'name email phone');
 
-    // Notify chef
+    // Notify chef via socket
     const io = req.app.get('io');
     if (io) {
       io.to('chef-room').emit('new-request', { request: populatedRequest });
     }
+
+    // Send WhatsApp + Email Notifications to Admin
+    notificationService.notifyNewRequest(populatedRequest).catch(err =>
+      console.error('Request notification dispatch error:', err.message)
+    );
 
     res.status(201).json({
       success: true,
