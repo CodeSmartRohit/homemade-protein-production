@@ -24,34 +24,47 @@ exports.getAllItems = async (req, res, next) => {
     } = req.query;
 
     const query = { isAvailable: true };
-    
-    if (isPopular === 'true') {
-      query.isPopular = true;
-    }
 
-    // Category filter
+    // Category filter — support both ObjectId (MongoDB) and UUID (localDb)
     if (category) {
       if (mongoose.Types.ObjectId.isValid(category)) {
         query.category = category;
       } else {
-        const cat = await Category.findOne({ slug: category }).lean();
+        // Try direct match first (UUID passed as category ID)
+        query.category = category;
+        // Also try slug lookup as fallback
+        const cat = await Category.findOne({ slug: category });
         if (cat) query.category = cat._id;
       }
     }
 
-    // Search
+    // Search — use $text for MongoDB, $or for LocalDB compatibility handled in localDb.js
     if (search) {
-      query.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { description: { $regex: search, $options: 'i' } }
-      ];
+      const isMongo = mongoose.connection.readyState === 1;
+      if (isMongo) {
+        query.$or = [
+          { name: { $regex: search, $options: 'i' } },
+          { description: { $regex: search, $options: 'i' } }
+        ];
+      } else {
+        // LocalDB: use $text which does a simple string search across all fields
+        query.$text = { $search: search };
+      }
     }
 
-    // Veg filter
-    if (isVeg !== undefined) {
-      if (isVeg === 'true') {
+    // Veg filter — support both isVeg (localDb) and dietaryPreference (MongoDB)
+    if (isVeg === 'true') {
+      const isMongo = mongoose.connection.readyState === 1;
+      if (isMongo) {
         query.dietaryPreference = 'vegetarian';
+      } else {
+        query.isVeg = true;
       }
+    }
+
+    // isPopular filter — only apply if explicitly requested AND items actually have this field
+    if (isPopular === 'true') {
+      query.isPopular = true;
     }
 
     // Price range

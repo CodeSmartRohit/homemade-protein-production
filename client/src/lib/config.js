@@ -8,9 +8,17 @@ const getBaseUrl = () => {
     // Priority 1: Environment Variable
     let url = process.env.NEXT_PUBLIC_API_URL;
     
-    // Priority 2: Hardcoded Production Fallback (Railway)
+    // Priority 2: Window location detection in browser
+    if (!url && typeof window !== 'undefined') {
+        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        if (isLocalhost) {
+            url = 'http://localhost:5000/api';
+        }
+    }
+
+    // Priority 3: Hardcoded Production Fallback (Render)
     if (!url) {
-        url = 'https://homemade-protein-production-production.up.railway.app/api';
+        url = 'https://homemade-protein-production.onrender.com/api';
     }
 
     if (url.endsWith('/')) url = url.slice(0, -1);
